@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Verse Website</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+    .container {
+      text-align: center;
+      max-width: 600px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #333;
+    }
+    #verse-text {
+      font-size: 1.2em;
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+    #verse-reference {
+      font-style: italic;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Daily Bible Verse</h1>
+    <div id="verse-text">Loading verse...</div>
+    <div id="verse-reference"></div>
+  </div>
+
+  <script>
+    // Function to fetch and display a verse
+    async function fetchVerse() {
+      try {
+        const response = await fetch('/api/verse');
+        if (!response.ok) {
+          throw new Error('Failed to fetch verse');
+        }
+        const verse = await response.json();
+        
+        document.getElementById('verse-text').textContent = verse.text;
+        document.getElementById('verse-reference').textContent = verse.reference;
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('verse-text').textContent = 'Error loading verse. Please try again later.';
+        document.getElementById('verse-reference').textContent = '';
+      }
+    }
+
+    // Fetch verse when page loads
+    fetchVerse();
+  </script>
+</body>
+</html> 
