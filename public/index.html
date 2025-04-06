@@ -3,68 +3,236 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bible Verse Website</title>
+  <meta name="description" content="Daily inspirational Bible verses with beautiful backgrounds">
+  <meta name="theme-color" content="#ffffff">
+  <title>Daily Bible Verse - Find Inspiration</title>
   <style>
+    :root {
+      --primary-color: #4a6da7;
+      --text-color: #333;
+      --background-color: #f5f5f5;
+      --card-background: rgba(255, 255, 255, 0.95);
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--background-color);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: background-image 0.5s ease-in-out;
+    }
+
+    main {
+      flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-      background-color: #f0f0f0;
+      padding: 1rem;
     }
-    .container {
+
+    .verse-card {
+      background-color: var(--card-background);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px var(--shadow-color);
+      max-width: min(600px, 90vw);
+      width: 100%;
       text-align: center;
-      max-width: 600px;
-      padding: 20px;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
     }
+
+    .verse-card:hover {
+      transform: translateY(-2px);
+    }
+
     h1 {
-      color: #333;
+      color: var(--text-color);
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      margin-bottom: 1.5rem;
     }
+
     #verse-text {
-      font-size: 1.2em;
-      margin: 20px 0;
-      line-height: 1.6;
+      font-size: clamp(1.1rem, 3vw, 1.3rem);
+      margin: 1.5rem 0;
+      line-height: 1.8;
     }
+
     #verse-reference {
       font-style: italic;
       color: #666;
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    }
+
+    .button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 1.5rem;
+      transition: background-color 0.3s;
+    }
+
+    .button:hover {
+      background-color: #3a5d97;
+    }
+
+    .button:focus {
+      outline: 3px solid #8aa4d4;
+      outline-offset: 2px;
+    }
+
+    .loading {
+      opacity: 0.7;
+    }
+
+    footer {
+      width: 100%;
+      padding: 1rem;
+      background-color: var(--card-background);
+      border-top: 1px solid #eaeaea;
+    }
+
+    .ad-container {
+      max-width: 728px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .ad-label {
+      font-size: 0.7rem;
+      color: #999;
+      margin-bottom: 0.3rem;
+    }
+
+    .placeholder-ad {
+      background-color: #eee;
+      color: #999;
+      padding: 1rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .verse-card {
+        padding: 1.5rem;
+      }
+
+      footer {
+        padding: 0.8rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .verse-card {
+        transition: none;
+      }
+
+      body {
+        transition: none;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-color: #e1e1e1;
+        --background-color: #1a1a1a;
+        --card-background: rgba(30, 30, 30, 0.95);
+        --shadow-color: rgba(0, 0, 0, 0.3);
+      }
+
+      .placeholder-ad {
+        background-color: #2a2a2a;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Daily Bible Verse</h1>
-    <div id="verse-text">Loading verse...</div>
-    <div id="verse-reference"></div>
-  </div>
+  <main>
+    <article class="verse-card" aria-live="polite">
+      <h1>Daily Bible Verse</h1>
+      <p id="verse-text" aria-label="Bible verse text">Loading verse...</p>
+      <p id="verse-reference" aria-label="Bible verse reference"></p>
+      <button class="button" onclick="fetchVerse()" aria-label="Get new verse">New Verse</button>
+    </article>
+  </main>
+
+  <footer>
+    <div class="ad-container">
+      <p class="ad-label">Advertisement</p>
+      <div class="placeholder-ad" role="complementary" aria-label="Advertisement space">
+        <!-- Ad code will go here -->
+        Advertisement Space
+      </div>
+    </div>
+  </footer>
 
   <script>
     // Function to fetch and display a verse
     async function fetchVerse() {
+      const verseText = document.getElementById('verse-text');
+      const verseRef = document.getElementById('verse-reference');
+      const verseCard = document.querySelector('.verse-card');
+      
       try {
+        // Add loading state
+        verseCard.classList.add('loading');
+        verseText.textContent = 'Loading verse...';
+        verseRef.textContent = '';
+
         const response = await fetch('/api/verse');
         if (!response.ok) {
           throw new Error('Failed to fetch verse');
         }
         const verse = await response.json();
         
-        document.getElementById('verse-text').textContent = verse.text;
-        document.getElementById('verse-reference').textContent = verse.reference;
+        // Update content with animation
+        setTimeout(() => {
+          verseText.textContent = verse.text;
+          verseRef.textContent = verse.reference;
+          verseCard.classList.remove('loading');
+          
+          // Update background based on theme (will be implemented later)
+          if (verse.theme) {
+            document.body.style.backgroundImage = `url(/images/bg-${verse.theme}.jpg)`;
+          }
+        }, 300);
+
       } catch (error) {
         console.error('Error:', error);
-        document.getElementById('verse-text').textContent = 'Error loading verse. Please try again later.';
-        document.getElementById('verse-reference').textContent = '';
+        verseText.textContent = 'Error loading verse. Please try again later.';
+        verseRef.textContent = '';
+        verseCard.classList.remove('loading');
       }
     }
 
     // Fetch verse when page loads
     fetchVerse();
+
+    // Add keyboard shortcut for new verse (press 'n' or spacebar)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'n' || e.key === ' ') {
+        if (e.target.tagName !== 'BUTTON') {
+          e.preventDefault();
+          fetchVerse();
+        }
+      }
+    });
   </script>
 </body>
 </html> 
