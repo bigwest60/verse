@@ -1,0 +1,293 @@
+import fs from 'fs';
+import path from 'path';
+import https from 'https';
+import { fileURLToPath } from 'url';
+import sharp from 'sharp';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
+
+// Theme-based background image URLs
+const THEME_IMAGES = {
+  love: { query: 'love nature landscape', light: true, dark: true },
+  guidance: { query: 'path forest nature', light: true, dark: true },
+  trust: { query: 'mountain sunrise', light: true, dark: true },
+  strength: { query: 'rock cliff nature', light: true, dark: true },
+  purpose: { query: 'road horizon landscape', light: true, dark: true },
+  rest: { query: 'peaceful lake nature', light: true, dark: true },
+  hope: { query: 'sunrise mountain landscape', light: true, dark: true },
+  future: { query: 'stars night sky', light: true, dark: true },
+  transformation: { query: 'butterfly nature macro', light: true, dark: true },
+  newness: { query: 'spring bloom nature', light: true, dark: true },
+  refuge: { query: 'shelter forest nature', light: true, dark: true },
+  fruit: { query: 'fruit tree garden', light: true, dark: true },
+  faith: { query: 'church architecture', light: true, dark: true },
+  wisdom: { query: 'ancient library', light: true, dark: true },
+  care: { query: 'hands helping nature', light: true, dark: true },
+  courage: { query: 'lion animal nature', light: true, dark: true },
+  mission: { query: 'compass journey', light: true, dark: true },
+  creation: { query: 'galaxy space stars', light: true, dark: true },
+  heaven: { query: 'clouds sky sunset', light: true, dark: true }
+};
+
+// Theme colors for fallback images
+const THEME_COLORS = {
+  love: { light: ['#ffd6d6', '#ffecec'], dark: ['#4d2626', '#332626'] },
+  guidance: { light: ['#d6e6ff', '#ecf2ff'], dark: ['#26334d', '#262d33'] },
+  trust: { light: ['#d6ffd6', '#ecffec'], dark: ['#264d26', '#263326'] },
+  strength: { light: ['#e6d6ff', '#f2ecff'], dark: ['#33264d', '#2d2633'] },
+  purpose: { light: ['#fff3d6', '#fff9ec'], dark: ['#4d4526', '#333326'] },
+  rest: { light: ['#d6fff3', '#ecfff9'], dark: ['#264d45', '#263333'] },
+  hope: { light: ['#ffe6d6', '#fff2ec'], dark: ['#4d3326', '#332926'] },
+  future: { light: ['#f3d6ff', '#f9ecff'], dark: ['#45264d', '#332633'] },
+  transformation: { light: ['#d6ffff', '#ecffff'], dark: ['#264d4d', '#263333'] },
+  newness: { light: ['#ffffe6', '#fffff2'], dark: ['#4d4d33', '#333329'] },
+  refuge: { light: ['#f3ffd6', '#f9ffec'], dark: ['#454d26', '#333326'] },
+  fruit: { light: ['#ffd6e6', '#ffecf2'], dark: ['#4d2633', '#332629'] },
+  faith: { light: ['#e6ffd6', '#f2ffec'], dark: ['#334d26', '#2d3326'] },
+  wisdom: { light: ['#ffd6f3', '#ffecf9'], dark: ['#4d2645', '#332633'] },
+  care: { light: ['#d6ffe6', '#ecfff2'], dark: ['#264d33', '#26332d'] },
+  courage: { light: ['#ffe6e6', '#fff2f2'], dark: ['#4d3333', '#332929'] },
+  mission: { light: ['#e6d6e6', '#f2ecf2'], dark: ['#332633', '#2d262d'] },
+  creation: { light: ['#d6ffe6', '#ecfff2'], dark: ['#264d33', '#26332d'] },
+  heaven: { light: ['#e6e6ff', '#f2f2ff'], dark: ['#33334d', '#292933'] }
+};
+
+/**
+ * Create directory if it doesn't exist
+ * @param {string} dir Directory path
+ */
+function ensureDirectoryExists(dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+/**
+ * Download an image from a URL
+ * @param {string} url Image URL
+ * @param {string} dest Destination path
+ * @returns {Promise<void>}
+ */
+function downloadImage(url, dest) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    
+    const options = {
+      headers: {
+        'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`
+      }
+    };
+    
+    https.get(url, options, (response) => {
+      if (response.statusCode === 302 || response.statusCode === 301) {
+        // Handle redirects
+        https.get(response.headers.location, (redirectResponse) => {
+          if (redirectResponse.statusCode !== 200) {
+            reject(new Error(`Failed to download image: ${redirectResponse.statusCode}`));
+            return;
+          }
+          redirectResponse.pipe(file);
+        }).on('error', (err) => {
+          fs.unlink(dest, () => {});
+          reject(err);
+        });
+      } else if (response.statusCode !== 200) {
+        reject(new Error(`Failed to download image: ${response.statusCode}`));
+        return;
+      } else {
+        response.pipe(file);
+      }
+      
+      file.on('finish', () => {
+        file.close();
+        resolve();
+      });
+    }).on('error', (err) => {
+      fs.unlink(dest, () => {}); // Clean up partial file
+      reject(err);
+    });
+    
+    file.on('error', (err) => {
+      fs.unlink(dest, () => {}); // Clean up partial file
+      reject(err);
+    });
+  });
+}
+
+/**
+ * Get a random image URL from Unsplash for a theme
+ * @param {string} query Search query
+ * @returns {Promise<string>}
+ */
+async function getUnsplashImageUrl(query) {
+  return new Promise((resolve, reject) => {
+    const encodedQuery = encodeURIComponent(query);
+    const url = `https://api.unsplash.com/photos/random?query=${encodedQuery}&orientation=landscape`;
+    
+    const options = {
+      headers: {
+        'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`
+      }
+    };
+    
+    https.get(url, options, (response) => {
+      let data = '';
+      
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to get image URL: ${response.statusCode}`));
+          return;
+        }
+        
+        try {
+          const json = JSON.parse(data);
+          resolve(json.urls.raw + '&w=1920&h=1080&fit=crop');
+        } catch (err) {
+          reject(new Error('Failed to parse Unsplash response'));
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+/**
+ * Generate a fallback gradient image
+ * @param {string} dest Destination path
+ * @param {string} theme Theme name
+ * @param {boolean} isDark Whether this is a dark variant
+ */
+async function generateFallbackImage(dest, theme, isDark) {
+  const variant = isDark ? 'dark' : 'light';
+  const [color1, color2] = THEME_COLORS[theme][variant];
+  
+  const width = 1920;
+  const height = 1080;
+  
+  // Create a gradient background
+  const svg = `
+    <svg width="${width}" height="${height}">
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${color1};stop-opacity:1" />
+          <stop offset="100%" style="stop-color:${color2};stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grad)"/>
+      <text 
+        x="50%" 
+        y="50%" 
+        font-family="sans-serif" 
+        font-size="48" 
+        font-weight="bold" 
+        fill="${isDark ? '#404040' : '#f0f0f0'}" 
+        text-anchor="middle" 
+        dominant-baseline="middle"
+      >
+        ${theme.toUpperCase()}
+      </text>
+    </svg>
+  `;
+  
+  await sharp(Buffer.from(svg))
+    .jpeg({ quality: 90 })
+    .toFile(dest);
+}
+
+/**
+ * Download all theme images
+ */
+async function downloadThemeImages() {
+  if (!UNSPLASH_ACCESS_KEY) {
+    console.error('Error: UNSPLASH_ACCESS_KEY is required in .env file');
+    process.exit(1);
+  }
+
+  console.log('Starting background image download...');
+  
+  try {
+    // Ensure images directory exists
+    ensureDirectoryExists(IMAGES_DIR);
+    
+    let downloaded = 0;
+    const total = Object.keys(THEME_IMAGES).length * 2; // Light and dark variants
+    
+    // Download images for each theme
+    for (const [theme, config] of Object.entries(THEME_IMAGES)) {
+      // Get light variant
+      const filename = `bg-${theme}.jpg`;
+      const destPath = path.join(IMAGES_DIR, filename);
+      
+      if (fs.existsSync(destPath)) {
+        console.log(`${filename} already exists, skipping...`);
+        downloaded++;
+      } else {
+        try {
+          const imageUrl = await getUnsplashImageUrl(config.query);
+          await downloadImage(imageUrl, destPath);
+          downloaded++;
+          console.log(`Downloaded ${filename} (${downloaded}/${total})`);
+        } catch (err) {
+          console.error(`Failed to download ${filename}, generating fallback...`);
+          try {
+            await generateFallbackImage(destPath, theme, false);
+            downloaded++;
+            console.log(`Generated fallback for ${filename} (${downloaded}/${total})`);
+          } catch (fallbackErr) {
+            console.error(`Failed to generate fallback for ${filename}:`, fallbackErr.message);
+          }
+        }
+      }
+      
+      // Get dark variant with different query
+      const darkFilename = `bg-${theme}-dark.jpg`;
+      const darkDestPath = path.join(IMAGES_DIR, darkFilename);
+      
+      if (fs.existsSync(darkDestPath)) {
+        console.log(`${darkFilename} already exists, skipping...`);
+        downloaded++;
+      } else {
+        try {
+          const darkQuery = `${config.query} night dark`;
+          const imageUrl = await getUnsplashImageUrl(darkQuery);
+          await downloadImage(imageUrl, darkDestPath);
+          downloaded++;
+          console.log(`Downloaded ${darkFilename} (${downloaded}/${total})`);
+        } catch (err) {
+          console.error(`Failed to download ${darkFilename}, generating fallback...`);
+          try {
+            await generateFallbackImage(darkDestPath, theme, true);
+            downloaded++;
+            console.log(`Generated fallback for ${darkFilename} (${downloaded}/${total})`);
+          } catch (fallbackErr) {
+            console.error(`Failed to generate fallback for ${darkFilename}:`, fallbackErr.message);
+          }
+        }
+      }
+      
+      // Add a small delay between themes to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    if (downloaded === 0) {
+      throw new Error('Failed to download or generate any images');
+    }
+    
+    console.log(`\nDownload complete! Successfully downloaded ${downloaded}/${total} images.`);
+    
+  } catch (err) {
+    console.error('Error during image download:', err);
+    process.exit(1);
+  }
+}
+
+// Run the download process
+downloadThemeImages(); 

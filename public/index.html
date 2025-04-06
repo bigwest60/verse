@@ -3,42 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Daily inspirational Bible verses with beautiful backgrounds">
-  <meta name="theme-color" content="#ffffff">
-  <title>Daily Bible Verse - Find Inspiration</title>
-  <script>
-    // Prevent flash of white background in dark mode
-    (function() {
-      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (isDarkMode) {
-        document.documentElement.style.setProperty('--theme-color', '#1a1a1a');
-        document.documentElement.style.backgroundColor = '#1a1a1a';
-        document.documentElement.style.colorScheme = 'dark';
-      }
-    })();
-  </script>
+  <meta name="description" content="Daily Bible verses with beautiful backgrounds">
+  <meta name="theme-color" content="#4a5568">
+  <title>Daily Verse</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="/app.js" as="script">
+  <link rel="preload" href="/styles.css" as="style">
+  
+  <!-- PWA support -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
-  <main>
-    <article class="verse-card" aria-live="polite">
-      <h1>Daily Bible Verse</h1>
-      <p id="verse-text" aria-label="Bible verse text">Loading verse...</p>
-      <p id="verse-reference" aria-label="Bible verse reference"></p>
-      <button class="button" aria-label="Get new verse">New Verse</button>
-    </article>
-  </main>
-
-  <footer>
-    <div class="ad-container">
-      <p class="ad-label">Advertisement</p>
-      <div class="placeholder-ad" role="complementary" aria-label="Advertisement space">
-        <!-- Ad code will go here -->
-        Advertisement Space
+  <div class="app-container">
+    <main>
+      <div class="verse-card">
+        <p class="verse-text" id="verse-text">Loading verse...</p>
+        <p class="verse-reference" id="verse-reference"></p>
+        <button class="button" type="button">New Verse</button>
       </div>
+    </main>
+    
+    <footer class="ad-container">
+      <div class="ad-placeholder">
+        <p>Advertisement</p>
+      </div>
+    </footer>
+  </div>
+  
+  <script src="/app.js" defer></script>
+  
+  <!-- Fallback for no JavaScript -->
+  <noscript>
+    <style>
+      .verse-card { opacity: 1 !important; }
+      .button { display: none; }
+    </style>
+    <div class="app-container">
+      <main>
+        <div class="verse-card">
+          <p>Please enable JavaScript to view daily verses.</p>
+        </div>
+      </main>
     </div>
-  </footer>
-
-  <script src="/app.js"></script>
+  </noscript>
 </body>
 </html> 

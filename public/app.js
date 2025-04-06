@@ -11,6 +11,7 @@ const config = {
   fadeDelay: 300,
   maxRetries: 3,
   retryDelay: 1000,
+  imageSizes: [480, 768, 1080, 1920],
   themes: {
     love: {
       light: { color: '#ffd6d6', overlay: 'rgba(255, 214, 214, 0.1)' },
@@ -92,24 +93,46 @@ const config = {
 };
 
 // State management
-let state = {
-  isLoading: false,
+const state = {
   currentTheme: null,
-  retryCount: 0,
   isDarkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
-  transitionInProgress: false
+  transitionInProgress: false,
+  retryCount: 0,
+  loadedImages: new Map()
 };
 
 /**
- * Listen for system dark mode changes
+ * Get the appropriate image size based on screen width
+ * @returns {number}
  */
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-  state.isDarkMode = e.matches;
-  if (state.currentTheme) {
-    updateThemeColors(state.currentTheme);
-    updateBackground(state.currentTheme);
+function getImageSize() {
+  const width = window.innerWidth * window.devicePixelRatio;
+  return config.imageSizes.find(size => size >= width) || config.imageSizes[config.imageSizes.length - 1];
+}
+
+/**
+ * Load an image with fallback support
+ * @param {string} theme
+ * @param {boolean} isDark
+ * @returns {Promise<HTMLImageElement>}
+ */
+async function loadImage(theme, isDark) {
+  const suffix = isDark ? '-dark' : '';
+  const path = `/images/bg-${theme}${suffix}.jpg`;
+  
+  try {
+    const img = new Image();
+    img.src = path;
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+    return img;
+  } catch (err) {
+    console.error(`Failed to load image: ${path}`, err);
+    throw err;
   }
-});
+}
 
 /**
  * Get theme colors based on current mode
@@ -123,186 +146,105 @@ function getThemeColors(theme) {
 }
 
 /**
- * Update theme colors in the UI
+ * Update background based on theme
  * @param {string} theme
  */
-function updateThemeColors(theme) {
-  const colors = getThemeColors(theme);
-  if (!colors) return;
-
-  // Apply theme colors with transition
-  document.documentElement.style.setProperty('--theme-color', colors.color);
-  document.documentElement.style.setProperty('--theme-overlay', colors.overlay);
-}
-
-/**
- * Preload background images for smooth transitions
- */
-function preloadBackgroundImages() {
-  Object.keys(config.themes).forEach(theme => {
-    // Preload both light and dark variants
-    const lightImg = new Image();
-    lightImg.src = `/images/bg-${theme}.jpg`;
-    
-    const darkImg = new Image();
-    darkImg.src = `/images/bg-${theme}-dark.jpg`;
-  });
-}
-
-/**
- * Set loading state with visual feedback
- * @param {boolean} loading
- */
-function setLoadingState(loading) {
-  state.isLoading = loading;
-  elements.verseCard.classList.toggle('loading', loading);
-  elements.newVerseBtn.disabled = loading;
+async function updateBackground(theme) {
+  if (!theme || theme === state.currentTheme) return;
   
-  if (loading) {
-    elements.verseText.textContent = 'Loading verse...';
-    elements.verseRef.textContent = '';
-  }
-}
-
-/**
- * Update the background based on verse theme
- * @param {string} theme
- */
-function updateBackground(theme) {
-  if (!theme || state.transitionInProgress) return;
-
-  const colors = getThemeColors(theme);
-  if (!colors) return;
-
-  state.transitionInProgress = true;
-  document.body.style.backgroundColor = colors.color;
-  
-  // Determine which image variant to use based on dark mode
-  const imageSuffix = state.isDarkMode ? '-dark' : '';
-  const imagePath = `/images/bg-${theme}${imageSuffix}.jpg`;
-  
-  const img = new Image();
-  img.onload = () => {
-    // Create overlay effect
-    document.body.style.backgroundImage = `
-      linear-gradient(${colors.overlay}, ${colors.overlay}),
-      url(${imagePath})
-    `;
-    state.currentTheme = theme;
-    
-    // Reset transition state after animation completes
-    setTimeout(() => {
-      state.transitionInProgress = false;
-    }, config.fadeDelay);
-  };
-  img.onerror = () => {
-    // If dark variant fails, try light variant as fallback
-    if (state.isDarkMode) {
-      const lightImg = new Image();
-      lightImg.onload = () => {
-        document.body.style.backgroundImage = `
-          linear-gradient(${colors.overlay}, ${colors.overlay}),
-          url(/images/bg-${theme}.jpg)
-        `;
-        state.currentTheme = theme;
-        setTimeout(() => {
-          state.transitionInProgress = false;
-        }, config.fadeDelay);
-      };
-      lightImg.onerror = () => {
-        console.warn(`Failed to load background for theme: ${theme}`);
-        document.body.style.backgroundImage = 'none';
-        state.transitionInProgress = false;
-      };
-      lightImg.src = `/images/bg-${theme}.jpg`;
-    } else {
-      console.warn(`Failed to load background for theme: ${theme}`);
-      document.body.style.backgroundImage = 'none';
-      state.transitionInProgress = false;
+  try {
+    const colors = getThemeColors(theme);
+    if (!colors) {
+      console.error('Invalid theme:', theme);
+      return;
     }
-  };
-  img.src = imagePath;
-}
-
-/**
- * Display error message with retry option
- * @param {Error} error
- */
-function handleError(error) {
-  console.error('Error:', error);
-  elements.verseText.textContent = 'Error loading verse. Please try again.';
-  elements.verseRef.textContent = '';
-  elements.verseCard.classList.remove('loading');
-  elements.newVerseBtn.disabled = false;
-  
-  if (state.retryCount < config.maxRetries) {
-    state.retryCount++;
-    setTimeout(fetchVerse, config.retryDelay);
+    
+    // Start loading the image
+    const img = await loadImage(theme, state.isDarkMode);
+    
+    // Apply the theme colors first
+    document.documentElement.style.setProperty('--theme-color', colors.color);
+    document.documentElement.style.setProperty('--theme-overlay', colors.overlay);
+    
+    // Then update the background image
+    document.body.style.backgroundImage = `url(${img.src})`;
+    document.body.classList.add('loaded');
+    
+    state.currentTheme = theme;
+  } catch (error) {
+    console.error('Failed to update background:', error);
   }
-}
-
-/**
- * Update the UI with new verse data
- * @param {Object} verse
- */
-function updateVerseDisplay(verse) {
-  setTimeout(() => {
-    elements.verseText.textContent = verse.text;
-    elements.verseRef.textContent = verse.reference;
-    elements.verseCard.classList.remove('loading');
-    elements.newVerseBtn.disabled = false;
-    updateBackground(verse.theme);
-  }, config.fadeDelay);
 }
 
 /**
  * Fetch and display a new verse
  */
 async function fetchVerse() {
-  if (state.isLoading) return;
+  if (elements.verseCard.classList.contains('loading')) return;
+  
+  elements.verseCard.classList.add('loading');
+  elements.newVerseBtn.disabled = true;
   
   try {
-    setLoadingState(true);
     const response = await fetch('/api/verse');
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error('Failed to fetch verse');
     
     const verse = await response.json();
-    state.retryCount = 0;
-    updateVerseDisplay(verse);
+    
+    // Start background update first
+    const backgroundPromise = updateBackground(verse.theme);
+    
+    // Fade out current text
+    elements.verseText.style.opacity = '0';
+    elements.verseRef.style.opacity = '0';
+    
+    // Wait for background update
+    await backgroundPromise;
+    
+    // Update text
+    setTimeout(() => {
+      elements.verseText.textContent = verse.text;
+      elements.verseRef.textContent = verse.reference;
+      elements.verseText.style.opacity = '1';
+      elements.verseRef.style.opacity = '1';
+    }, config.fadeDelay);
     
   } catch (error) {
-    handleError(error);
+    console.error('Error fetching verse:', error);
+    elements.verseText.textContent = 'Error loading verse. Please try again.';
+    elements.verseRef.textContent = '';
   } finally {
-    setLoadingState(false);
+    elements.verseCard.classList.remove('loading');
+    elements.newVerseBtn.disabled = false;
   }
 }
 
-/**
- * Handle keyboard shortcuts
- * @param {KeyboardEvent} e
- */
-function handleKeyPress(e) {
-  // Only handle shortcuts if not typing in an input
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  
-  if (e.key === 'n' || e.key === ' ') {
-    e.preventDefault();
-    fetchVerse();
-  }
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  // Set up event listeners
-  document.addEventListener('keydown', handleKeyPress);
+// Initialize only once
+function init() {
+  // Add event listeners
   elements.newVerseBtn.addEventListener('click', fetchVerse);
+  document.addEventListener('keydown', (event) => {
+    if (event.code === 'Space' && !elements.newVerseBtn.disabled) {
+      event.preventDefault();
+      fetchVerse();
+    }
+  });
   
-  // Preload background images
-  preloadBackgroundImages();
+  // Handle dark mode changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    state.isDarkMode = e.matches;
+    if (state.currentTheme) {
+      updateBackground(state.currentTheme);
+    }
+  });
   
   // Fetch initial verse
   fetchVerse();
-}); 
+}
+
+// Run initialization
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+} 

@@ -10,8 +10,15 @@
     "generate": "node scripts/dev.js generate",
     "parse-prd": "node scripts/dev.js parse-prd",
     "start": "node src/index.js",
-    "init-data": "node src/extract-verses.js && node src/download-images.js",
-    "setup": "npm run init-data && npm start"
+    "prepare": "node src/extract-verses.js && node src/download-images.js",
+    "init-data": "npm run prepare",
+    "setup": "npm run prepare && npm start",
+    "clean": "rm -f public/verses.json && rm -rf public/images",
+    "build": "npm run build:js && npm run build:css && npm run optimize:images",
+    "build:js": "esbuild public/app.js --bundle --minify --outfile=public/app.min.js --format=esm",
+    "build:css": "postcss public/styles.css -o public/styles.min.css",
+    "optimize:images": "node scripts/optimize-images.js",
+    "start:prod": "NODE_ENV=production node src/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -26,6 +33,14 @@
     "gradient-string": "^2.0.2",
     "openai": "^4.86.1",
     "ora": "^7.0.1",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "sharp": "^0.33.2"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "cssnano": "^6.1.1",
+    "esbuild": "^0.20.2",
+    "postcss": "^8.4.38",
+    "postcss-cli": "^11.0.0"
   }
 }
