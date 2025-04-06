@@ -4,25 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Daily Bible verses with beautiful backgrounds">
-  <meta name="theme-color" content="#4a5568">
   <title>Daily Verse</title>
   <link rel="stylesheet" href="/styles.css">
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   
-  <!-- Preload critical resources -->
-  <link rel="preload" href="/app.js" as="script">
-  <link rel="preload" href="/styles.css" as="style">
+  <style>
+    #verse-theme {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 0.7 !important;
+      color: white !important;
+      padding: 8px !important;
+      text-align: center !important;
+      font-size: 14px !important;
+      margin: 0 0 20px 0 !important;
+      font-weight: normal !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      text-transform: uppercase !important;
+      letter-spacing: 2px !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    }
+    
+    .verse-card {
+      position: relative !important;
+      z-index: 5 !important;
+    }
+  </style>
   
-  <!-- PWA support -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <link rel="apple-touch-icon" href="/icon-192.png">
+  <!-- Prevent PWA installation prompts -->
+  <meta name="mobile-web-app-capable" content="no">
+  <meta name="apple-mobile-web-app-capable" content="no">
 </head>
 <body>
   <div class="app-container">
     <main>
       <div class="verse-card">
+        <p id="verse-theme">LOADING...</p>
         <p class="verse-text" id="verse-text">Loading verse...</p>
         <p class="verse-reference" id="verse-reference"></p>
         <button class="button" type="button">New Verse</button>
@@ -36,9 +53,16 @@
     </footer>
   </div>
   
-  <script src="/app.js" defer></script>
+  <script>
+    // Prevent service worker registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => registration.unregister());
+      });
+    }
+  </script>
+  <script src="/app.js"></script>
   
-  <!-- Fallback for no JavaScript -->
   <noscript>
     <style>
       .verse-card { opacity: 1 !important; }
@@ -47,6 +71,7 @@
     <div class="app-container">
       <main>
         <div class="verse-card">
+          <p id="verse-theme">THEME UNAVAILABLE</p>
           <p>Please enable JavaScript to view daily verses.</p>
         </div>
       </main>

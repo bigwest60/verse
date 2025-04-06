@@ -18,6 +18,17 @@ const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const VERSES_PATH = path.join(__dirname, '../public/verses.json');
+const DEBUG = process.env.DEBUG || !IS_PROD;
+
+// Debug info
+if (DEBUG) {
+  console.log('---- Server Debug Info ----');
+  console.log(`Current directory: ${__dirname}`);
+  console.log(`Verses path: ${VERSES_PATH}`);
+  console.log(`Environment: ${IS_PROD ? 'production' : 'development'}`);
+  console.log(`Node version: ${process.version}`);
+  console.log('--------------------------');
+}
 
 // Initialize Express app
 const app = express();
@@ -25,6 +36,14 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Add request logging in debug mode
+if (DEBUG) {
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+  });
+}
 
 // Cache control middleware for production
 if (IS_PROD) {
@@ -86,26 +105,38 @@ async function loadVerses() {
     if (!fs.existsSync(VERSES_PATH)) {
       console.log('verses.json not found, running prepare script...');
       try {
+        if (DEBUG) console.log('Running prepare script...');
         execSync('npm run prepare', { stdio: 'inherit' });
+        if (DEBUG) console.log('Prepare script completed');
       } catch (prepareError) {
         console.error('Error running prepare script:', prepareError);
         throw new Error('Failed to prepare verses data');
       }
     }
     
+    if (DEBUG) console.log(`Reading verses from ${VERSES_PATH}`);
     const data = fs.readFileSync(VERSES_PATH, 'utf8');
-    const verses = JSON.parse(data);
+    if (DEBUG) console.log(`Verses file size: ${data.length} bytes`);
     
-    // Reset retry count on success
-    versesCache = {
-      data: verses,
-      timestamp: now,
-      retryCount: 0,
-      maxRetries: versesCache.maxRetries,
-      retryDelay: versesCache.retryDelay
-    };
-    
-    return verses;
+    try {
+      const verses = JSON.parse(data);
+      if (DEBUG) console.log(`Parsed ${verses.verses?.length || 0} verses successfully`);
+      
+      // Reset retry count on success
+      versesCache = {
+        data: verses,
+        timestamp: now,
+        retryCount: 0,
+        maxRetries: versesCache.maxRetries,
+        retryDelay: versesCache.retryDelay
+      };
+      
+      return verses;
+    } catch (parseError) {
+      console.error('Error parsing verses JSON:', parseError);
+      console.error('First 100 characters of data:', data.substring(0, 100));
+      throw new Error('Failed to parse verses JSON');
+    }
   } catch (error) {
     console.error('Error loading verses:', error);
     
@@ -174,13 +205,46 @@ app.get('/api/verse/meta', async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// Error handling
+// Handle PWA-related requests
+app.get('/manifest.json', (req, res) => {
+  res.json({
+    name: 'Daily Verse',
+    short_name: 'Verse',
+    display: 'browser',
+    start_url: '/',
+    scope: '/',
+    background_color: '#000000',
+    theme_color: '#000000',
+    icons: []
+  });
+});
+
+app.get('/icon-192.png', (req, res) => {
+  res.sendStatus(204);
+});
+
+app.get('/favicon.ico', (req, res) => {
+  res.sendStatus(204);
+});
+
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+  res.status(500).json({
+    error: 'Internal server error',
+    message: err.message
+  });
+});
+
+// Handle 404s
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Not found',
+    message: 'The requested resource was not found'
+  });
 });
 
 // Handle process errors
