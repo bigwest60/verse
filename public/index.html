@@ -6,6 +6,17 @@
   <meta name="description" content="Daily inspirational Bible verses with beautiful backgrounds">
   <meta name="theme-color" content="#ffffff">
   <title>Daily Bible Verse - Find Inspiration</title>
+  <script>
+    // Prevent flash of white background in dark mode
+    (function() {
+      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isDarkMode) {
+        document.documentElement.style.setProperty('--theme-color', '#1a1a1a');
+        document.documentElement.style.backgroundColor = '#1a1a1a';
+        document.documentElement.style.colorScheme = 'dark';
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -14,7 +25,7 @@
       <h1>Daily Bible Verse</h1>
       <p id="verse-text" aria-label="Bible verse text">Loading verse...</p>
       <p id="verse-reference" aria-label="Bible verse reference"></p>
-      <button class="button" onclick="fetchVerse()" aria-label="Get new verse">New Verse</button>
+      <button class="button" aria-label="Get new verse">New Verse</button>
     </article>
   </main>
 
@@ -28,57 +39,6 @@
     </div>
   </footer>
 
-  <script>
-    // Function to fetch and display a verse
-    async function fetchVerse() {
-      const verseText = document.getElementById('verse-text');
-      const verseRef = document.getElementById('verse-reference');
-      const verseCard = document.querySelector('.verse-card');
-      
-      try {
-        // Add loading state
-        verseCard.classList.add('loading');
-        verseText.textContent = 'Loading verse...';
-        verseRef.textContent = '';
-
-        const response = await fetch('/api/verse');
-        if (!response.ok) {
-          throw new Error('Failed to fetch verse');
-        }
-        const verse = await response.json();
-        
-        // Update content with animation
-        setTimeout(() => {
-          verseText.textContent = verse.text;
-          verseRef.textContent = verse.reference;
-          verseCard.classList.remove('loading');
-          
-          // Update background based on theme (will be implemented later)
-          if (verse.theme) {
-            document.body.style.backgroundImage = `url(/images/bg-${verse.theme}.jpg)`;
-          }
-        }, 300);
-
-      } catch (error) {
-        console.error('Error:', error);
-        verseText.textContent = 'Error loading verse. Please try again later.';
-        verseRef.textContent = '';
-        verseCard.classList.remove('loading');
-      }
-    }
-
-    // Fetch verse when page loads
-    fetchVerse();
-
-    // Add keyboard shortcut for new verse (press 'n' or spacebar)
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'n' || e.key === ' ') {
-        if (e.target.tagName !== 'BUTTON') {
-          e.preventDefault();
-          fetchVerse();
-        }
-      }
-    });
-  </script>
+  <script src="/app.js"></script>
 </body>
 </html> 
