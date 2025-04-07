@@ -17,7 +17,9 @@
     "optimize:images": "node scripts/optimize-images.js",
     "start:prod": "NODE_ENV=production node src/index.js",
     "setup": "node src/download-images.js && npm run optimize:images",
-    "prepare": "npm run setup"
+    "prepare": "npm run setup",
+    "static": "node scripts/generate-static.js",
+    "serve:static": "npx serve dist"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

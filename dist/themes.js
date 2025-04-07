@@ -1,0 +1,1 @@
+window.AVAILABLE_THEMES = ["care","courage","creation","faith","fruit","future","guidance","heaven","hope","love","mission","newness","purpose","refuge","rest","strength","transformation","trust","wisdom"];
