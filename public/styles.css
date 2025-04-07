@@ -13,9 +13,10 @@
   --text-color: #2d3748;
   --text-muted: #666;
   --background-color: #ffffff;
-  --card-background: rgba(255, 255, 255, 0.9);
+  --card-background: rgba(45, 55, 72, 0.15);
   --shadow-color: rgba(0, 0, 0, 0.1);
   --border-color: #eaeaea;
+  --theme-text-color: rgba(45, 55, 72, 0.95);
   
   /* Spacing */
   --spacing-xs: 0.3rem;
@@ -41,23 +42,24 @@
   --button-background: #4a5568;
   --button-hover: #2d3748;
   --button-active: #1a202c;
+  --button-text: #ffffff;
 }
 
 /* Dark mode variables */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text-color: #e2e8f0;
-    --text-muted: #a0a0a0;
-    --background-color: #1a202c;
-    --card-background: rgba(26, 32, 44, 0.9);
-    --shadow-color: rgba(0, 0, 0, 0.3);
-    --border-color: #2a2a2a;
-    --theme-color: #1a1a1a;
-    --primary-color: #a0aec0;
-    --button-background: #4a5568;
-    --button-hover: #2d3748;
-    --button-active: #1a202c;
-  }
+[data-theme="dark"] {
+  --text-color: #e2e8f0;
+  --text-muted: #a0a0a0;
+  --background-color: #1a202c;
+  --card-background: rgba(226, 232, 240, 0.15);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --border-color: #2a2a2a;
+  --theme-color: #1a1a1a;
+  --primary-color: #a0aec0;
+  --button-background: #4a5568;
+  --button-hover: #2d3748;
+  --button-active: #1a202c;
+  --button-text: #ffffff;
+  --theme-text-color: rgba(226, 232, 240, 0.95);
 }
 
 /* Base styles */
@@ -77,6 +79,8 @@ body {
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
+  color: var(--text-color);
+  transition: background-color var(--transition-duration) ease-out, color var(--transition-duration) ease-out;
 }
 
 /* Background layers */
@@ -112,7 +116,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  position: relative;
 }
 
 main {
@@ -120,55 +124,210 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: var(--spacing-md);
+  width: 100%;
 }
 
 .verse-card {
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  max-width: 600px;
+  background: var(--card-background);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow);
+  max-width: var(--max-width);
   width: 100%;
-  text-align: center;
-  transition: all 0.5s ease;
+  margin: 0 auto;
+  backdrop-filter: blur(8px);
   transform-origin: center;
+  transition: all var(--transition-duration) ease-out;
+  will-change: transform, opacity, background;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text-color);
+}
+
+/* Remove this override as it's no longer needed */
+[data-theme="light"] .verse-card {
+  background: var(--card-background);
+}
+
+/* Update dark mode override to use data-theme */
+[data-theme="dark"] .verse-card {
+  background: var(--card-background);
 }
 
 .verse-card.loading {
+  opacity: 0.7;
   transform: scale(0.98);
-  opacity: 0.8;
+}
+
+.verse-theme {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--theme-text-color) !important;
+  padding: 8px !important;
+  text-align: center !important;
+  font-size: 16px !important;
+  margin: 0 0 20px 0 !important;
+  font-weight: 600 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 .verse-text {
   font-size: 1.5rem;
-  margin: 0 0 1.5rem;
   line-height: 1.4;
-  transition: all 0.3s ease-out;
-  transform-origin: center;
-  will-change: opacity, transform;
-}
-
-.verse-text.fade-out {
-  opacity: 0;
-  transform: scale(0.98);
+  margin-bottom: 1rem;
+  text-align: center;
+  max-width: 100%;
+  color: var(--text-color);
+  font-weight: 500;
 }
 
 .verse-reference {
-  font-size: 1.25rem;
-  font-style: italic;
-  margin: 0 0 2rem;
+  font-size: 1.125rem;
   opacity: 0.9;
-  transition: all 0.3s ease-out;
-  transform-origin: center;
-  will-change: opacity, transform;
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-color);
+  font-weight: 500;
 }
 
-.verse-reference.fade-out {
+.verse-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* Button styles */
+.button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: var(--button-background);
+  color: var(--button-text);
+  border: none;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: var(--button-hover);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background: var(--button-active);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Background transition */
+.background-transition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
   opacity: 0;
-  transform: scale(0.98);
+  transition: opacity var(--transition-duration) ease-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.background-transition.active {
+  opacity: 1;
+}
+
+/* Header styles */
+header {
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  z-index: 10;
+}
+
+#themeToggle,
+.share-button,
+.help-button {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--text-color);
+  opacity: 0.8;
+  transition: opacity var(--transition-duration) ease-out;
+  outline: none;
+  -webkit-tap-highlight-color: transparent; /* Prevent tap highlight on mobile */
+}
+
+#themeToggle:hover,
+.share-button:hover,
+.help-button:hover {
+  opacity: 1;
+}
+
+#themeToggle:focus:not(:focus-visible),
+.share-button:focus:not(:focus-visible),
+.help-button:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+#themeToggle:focus-visible,
+.share-button:focus-visible,
+.help-button:focus-visible {
+  outline: 3px solid var(--primary-focus);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+#themeToggle svg,
+.share-button svg,
+.help-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Main content styles */
+.app {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  position: relative;
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  transition: background-image var(--transition-duration) ease-out;
 }
 
 #verse-theme {
@@ -180,27 +339,6 @@ main {
 #verse-theme.fade-out {
   opacity: 0;
   transform: scale(0.98);
-}
-
-.button {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  border-radius: 2rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.6);
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* Media Queries */
@@ -290,4 +428,20 @@ main {
   footer {
     display: none;
   }
+}
+
+#themeToggle .sun-icon {
+  display: none;
+}
+
+#themeToggle .moon-icon {
+  display: block;
+}
+
+[data-theme="dark"] #themeToggle .sun-icon {
+  display: block;
+}
+
+[data-theme="dark"] #themeToggle .moon-icon {
+  display: none;
 } 

@@ -7,9 +7,13 @@
   <title>Daily Verse</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4a5568">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   
   <style>
-    #verse-theme {
+    .verse-theme {
       display: block !important;
       visibility: visible !important;
       opacity: 0.7 !important;
@@ -41,12 +45,32 @@
   <div class="background-layer" id="bg-layer-2"></div>
   <div class="background-overlay"></div>
   <div class="app-container">
+    <header>
+      <button id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      </button>
+      <button id="shareBtn" aria-label="Share verse" class="share-button">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4m0 0L8 6m4-4v13" />
+        </svg>
+      </button>
+      <a href="/help.html" class="help-button" aria-label="Help">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M12 3a9 9 0 110 18 9 9 0 010-18z" />
+        </svg>
+      </a>
+    </header>
     <main>
-      <div class="verse-card">
-        <p id="verse-theme">LOADING...</p>
+      <div class="verse-card" id="verseCard">
+        <p class="verse-theme">LOADING...</p>
         <p class="verse-text" id="verse-text">Loading verse...</p>
         <p class="verse-reference" id="verse-reference"></p>
-        <button class="button" type="button">New Verse</button>
+        <button class="button" type="button" id="newVerseBtn">New Verse</button>
       </div>
     </main>
   </div>
@@ -69,7 +93,7 @@
     <div class="app-container">
       <main>
         <div class="verse-card">
-          <p id="verse-theme">THEME UNAVAILABLE</p>
+          <p class="verse-theme">THEME UNAVAILABLE</p>
           <p>Please enable JavaScript to view daily verses.</p>
         </div>
       </main>

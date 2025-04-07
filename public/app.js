@@ -1,14 +1,3 @@
-// Cache DOM elements
-const elements = {
-  verseText: document.getElementById('verse-text'),
-  verseRef: document.getElementById('verse-reference'),
-  verseTheme: document.getElementById('verse-theme'),
-  verseCard: document.querySelector('.verse-card'),
-  newVerseBtn: document.querySelector('.button'),
-  bgLayer1: document.getElementById('bg-layer-1'),
-  bgLayer2: document.getElementById('bg-layer-2')
-};
-
 // Configuration
 const config = {
   fadeDelay: 300,
@@ -23,6 +12,23 @@ let activeLayer = 1;
 
 // Cache for preloaded images
 const imageCache = new Map();
+
+// State
+let currentVerse = null;
+let isLoading = false;
+
+// DOM Elements
+let verseCard;
+let verseText;
+let verseReference;
+let newVerseBtn;
+let shareBtn;
+let themeToggle;
+
+// Theme handling
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+const theme = localStorage.getItem('theme') || (prefersDark.matches ? 'dark' : 'light');
+document.documentElement.setAttribute('data-theme', theme);
 
 // Debug logging
 function log(message, data) {
@@ -65,30 +71,31 @@ async function setThemeText(theme) {
     isEmpty: theme === ''
   });
   
-  if (!elements.verseTheme) {
+  const themeElement = verseCard.querySelector('.verse-theme');
+  if (!themeElement) {
     console.error('Theme element not found');
     return;
   }
   
-  elements.verseTheme.classList.add('fade-out');
+  themeElement.classList.add('fade-out');
   
   // Only show loading text if theme is explicitly undefined
   const text = theme === undefined ? 'loading' : 
                theme === '' ? 'error' :
                theme.toLowerCase();
                
-  elements.verseTheme.textContent = text;
-  elements.verseTheme.classList.remove('fade-out');
+  themeElement.textContent = text;
+  themeElement.classList.remove('fade-out');
   
   log('Theme text set to:', {
     text: text,
-    elementContent: elements.verseTheme.textContent,
-    elementVisible: elements.verseTheme.offsetParent !== null
+    elementContent: themeElement.textContent,
+    elementVisible: themeElement.offsetParent !== null
   });
 
   // Set background image based on theme
   if (theme && theme !== '') {
-    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     const imagePath = `/images/bg-${theme.toLowerCase()}${isDarkMode ? '-dark' : ''}.jpg`;
     
     // Don't transition to the same image
@@ -110,8 +117,12 @@ async function setThemeText(theme) {
       await preloadImage(imagePath);
       
       // Get the next background layer
-      const nextLayer = activeLayer === 1 ? elements.bgLayer2 : elements.bgLayer1;
-      const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
+      const nextLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-2' : 'bg-layer-1');
+      const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
+      
+      if (!nextLayer || !currentLayer) {
+        throw new Error('Background layers not found');
+      }
       
       // Set the new image on the inactive layer
       nextLayer.style.backgroundImage = `url('${imagePath}')`;
@@ -139,8 +150,8 @@ async function setThemeText(theme) {
       if (currentBackgroundImage) {
         try {
           // Try to restore the previous background if needed
-          const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
-          if (!currentLayer.style.backgroundImage.includes(currentBackgroundImage)) {
+          const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
+          if (currentLayer && !currentLayer.style.backgroundImage.includes(currentBackgroundImage)) {
             await preloadImage(currentBackgroundImage);
             currentLayer.style.backgroundImage = `url('${currentBackgroundImage}')`;
             currentLayer.classList.add('active');
@@ -153,9 +164,11 @@ async function setThemeText(theme) {
             ['#f7fafc', '#edf2f7']; // Light mode gradient
             
           const gradient = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
-          const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
-          currentLayer.style.backgroundImage = gradient;
-          currentLayer.classList.add('active');
+          const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
+          if (currentLayer) {
+            currentLayer.style.backgroundImage = gradient;
+            currentLayer.classList.add('active');
+          }
           currentBackgroundImage = '';
           log('Using fallback gradient after restore failed');
         }
@@ -166,9 +179,11 @@ async function setThemeText(theme) {
           ['#f7fafc', '#edf2f7']; // Light mode gradient
           
         const gradient = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
-        const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
-        currentLayer.style.backgroundImage = gradient;
-        currentLayer.classList.add('active');
+        const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
+        if (currentLayer) {
+          currentLayer.style.backgroundImage = gradient;
+          currentLayer.classList.add('active');
+        }
         currentBackgroundImage = '';
         log('Using fallback gradient (no previous background)');
       }
@@ -177,11 +192,16 @@ async function setThemeText(theme) {
     }
   } else {
     // Clear background image if no theme
-    const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
-    currentLayer.style.backgroundImage = 'none';
-    currentLayer.classList.add('active');
-    const otherLayer = activeLayer === 1 ? elements.bgLayer2 : elements.bgLayer1;
-    otherLayer.classList.remove('active');
+    const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
+    const otherLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-2' : 'bg-layer-1');
+    
+    if (currentLayer) {
+      currentLayer.style.backgroundImage = 'none';
+      currentLayer.classList.add('active');
+    }
+    if (otherLayer) {
+      otherLayer.classList.remove('active');
+    }
     currentBackgroundImage = '';
     isLoadingBackground = false;
     log('Background image cleared');
@@ -192,21 +212,17 @@ async function setThemeText(theme) {
  * Fetch and display a new verse
  */
 async function fetchVerse() {
-  log('Starting fetchVerse');
+  if (isLoading) return;
   
-  if (!elements.verseCard || elements.verseCard.classList.contains('loading')) {
-    log('Already loading or card not found');
-    return;
-  }
-  
-  elements.verseCard.classList.add('loading');
-  if (elements.newVerseBtn) {
-    elements.newVerseBtn.disabled = true;
+  isLoading = true;
+  verseCard.classList.add('loading');
+  if (newVerseBtn) {
+    newVerseBtn.disabled = true;
   }
   
   // Add fade-out classes
-  elements.verseText.classList.add('fade-out');
-  elements.verseRef.classList.add('fade-out');
+  verseText.classList.add('fade-out');
+  verseReference.classList.add('fade-out');
   
   try {
     log('Fetching verse from API');
@@ -231,10 +247,10 @@ async function fetchVerse() {
       });
 
       // Re-enable button as soon as we have valid data
-      if (elements.newVerseBtn) {
-        elements.newVerseBtn.disabled = false;
+      if (newVerseBtn) {
+        newVerseBtn.disabled = false;
       }
-      elements.verseCard.classList.remove('loading');
+      verseCard.classList.remove('loading');
     } catch (parseError) {
       console.error('Failed to parse verse JSON:', parseError);
       throw parseError;
@@ -260,16 +276,16 @@ async function fetchVerse() {
     const textPromise = new Promise(resolve => {
       // Small initial delay to let fade-out start
       setTimeout(() => {
-        if (elements.verseText) {
-          elements.verseText.textContent = verse.text || 'Error: No verse text';
-          elements.verseText.classList.remove('fade-out');
-          log('Updated verse text to:', elements.verseText.textContent);
+        if (verseText) {
+          verseText.textContent = verse.text || 'Error: No verse text';
+          verseText.classList.remove('fade-out');
+          log('Updated verse text to:', verseText.textContent);
         }
         
-        if (elements.verseRef) {
-          elements.verseRef.textContent = verse.reference || '';
-          elements.verseRef.classList.remove('fade-out');
-          log('Updated verse reference to:', elements.verseRef.textContent);
+        if (verseReference) {
+          verseReference.textContent = verse.reference || '';
+          verseReference.classList.remove('fade-out');
+          log('Updated verse reference to:', verseReference.textContent);
         }
         resolve();
       }, 100); // Minimal delay for smooth transition
@@ -280,6 +296,9 @@ async function fetchVerse() {
       console.error('Error during transitions:', error);
     });
     
+    // Update current verse
+    currentVerse = verse;
+    
   } catch (error) {
     console.error('Error in fetchVerse:', error);
     log('Error details:', {
@@ -289,67 +308,172 @@ async function fetchVerse() {
     });
     
     // Show error state immediately
-    if (elements.verseText) {
-      elements.verseText.textContent = 'Error loading verse. Please try again.';
-      elements.verseText.classList.remove('fade-out');
+    if (verseText) {
+      verseText.textContent = 'Error loading verse. Please try again.';
+      verseText.classList.remove('fade-out');
     }
-    if (elements.verseRef) {
-      elements.verseRef.textContent = '';
-      elements.verseRef.classList.remove('fade-out');
+    if (verseReference) {
+      verseReference.textContent = '';
+      verseReference.classList.remove('fade-out');
     }
     setThemeText('').catch(console.error);
     
     // Remove loading state and re-enable button
-    elements.verseCard.classList.remove('loading');
-    if (elements.newVerseBtn) {
-      elements.newVerseBtn.disabled = false;
+    verseCard.classList.remove('loading');
+    if (newVerseBtn) {
+      newVerseBtn.disabled = false;
     }
+  } finally {
+    isLoading = false;
   }
   
   log('Finished fetchVerse');
+}
+
+// Functions
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Remove focus from the theme toggle button
+    document.getElementById('themeToggle').blur();
+    
+    if (currentVerse) {
+        setThemeText(currentVerse.theme);
+    }
+}
+
+async function shareVerse() {
+    if (!currentVerse) return;
+    
+    const shareText = `${currentVerse.text}\n\n— ${currentVerse.reference}`;
+    
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Daily Verse',
+                text: shareText
+            });
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Error sharing:', error);
+                fallbackShare(shareText);
+            }
+        }
+    } else {
+        fallbackShare(shareText);
+    }
+}
+
+function fallbackShare(text) {
+    // Create a temporary textarea
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+        document.execCommand('copy');
+        alert('Verse copied to clipboard!');
+    } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        alert('Could not copy verse. Please try again.');
+    }
+    
+    document.body.removeChild(textarea);
 }
 
 // Initialize
 function init() {
   log('Initializing app');
   
-  // Check elements
-  Object.entries(elements).forEach(([key, element]) => {
-    if (!element) {
-      console.error(`Missing element: ${key}`);
-    } else {
-      log(`Found element: ${key}`);
-    }
-  });
-  
-  // Add click handler
-  if (elements.newVerseBtn) {
-    elements.newVerseBtn.addEventListener('click', () => {
-      log('New verse button clicked');
-      fetchVerse();
-    });
-    log('Added click handler');
+  // Initialize DOM elements
+  verseCard = document.getElementById('verseCard');
+  if (!verseCard) {
+    console.error('Missing verseCard');
+    return;
   }
+  
+  verseText = verseCard.querySelector('.verse-text');
+  verseReference = verseCard.querySelector('.verse-reference');
+  newVerseBtn = document.getElementById('newVerseBtn');
+  shareBtn = document.getElementById('shareBtn');
+  themeToggle = document.getElementById('themeToggle');
+  
+  // Verify all required elements exist
+  if (!verseText || !verseReference || !newVerseBtn || !shareBtn || !themeToggle) {
+    console.error('Missing required DOM elements');
+    return;
+  }
+  
+  log('Found all required DOM elements');
 
-  // Add keyboard handler for 'n' key
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'n' && !elements.newVerseBtn.disabled) {
-      log('N key pressed');
-      fetchVerse();
+  // Add event listeners
+  newVerseBtn.addEventListener('click', fetchVerse);
+  shareBtn.addEventListener('click', shareVerse);
+  themeToggle.addEventListener('click', toggleTheme);
+
+  // Add keyboard shortcuts
+  document.addEventListener('keydown', function(event) {
+    // Ignore key events when typing in input fields
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    switch (event.key) {
+      case ' ':
+        event.preventDefault();
+        if (!isLoading) {
+          newVerseBtn.click();
+        }
+        break;
+      case 't':
+      case 'T':
+        event.preventDefault();
+        themeToggle.click();
+        break;
+      case 's':
+      case 'S':
+        event.preventDefault();
+        shareBtn.click();
+        break;
+      case '?':
+      case 'h':
+      case 'H':
+        event.preventDefault();
+        window.location.href = '/help.html';
+        break;
     }
   });
-  log('Added keyboard handler');
+  log('Added keyboard shortcuts');
 
   // Add dark mode listener
   const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
   darkModeMediaQuery.addEventListener('change', () => {
     log('Dark mode preference changed');
-    const currentTheme = elements.verseTheme?.textContent?.trim().toLowerCase();
+    const currentTheme = verseCard.querySelector('.verse-theme')?.textContent?.trim().toLowerCase();
     if (currentTheme && !['loading', 'error'].includes(currentTheme)) {
       setThemeText(currentTheme);
     }
   });
   log('Added dark mode listener');
+  
+  // Add tabindex to theme toggle to prevent focus
+  themeToggle.setAttribute('tabindex', '-1');
+  
+  // Handle spacebar press
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && e.target === document.body) {
+      e.preventDefault();
+      document.getElementById('newVerseBtn').click();
+    }
+  });
   
   // Fetch initial verse
   fetchVerse();
