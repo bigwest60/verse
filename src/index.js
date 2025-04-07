@@ -85,8 +85,56 @@ let versesCache = {
   timestamp: 0,
   retryCount: 0,
   maxRetries: 3,
-  retryDelay: 1000 // 1 second
+  retryDelay: 1000, // 1 second
+  lastVerse: null,  // Track the last verse served
+  shuffledVerses: [], // Store shuffled verses
+  currentIndex: 0    // Track current position in shuffled array
 };
+
+/**
+ * Implements Fisher-Yates shuffle algorithm
+ * @param {Array} array The array to shuffle
+ * @returns {Array} A new shuffled array
+ */
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/**
+ * Get the next verse from the shuffled array
+ * @param {Object} verses The verses data object
+ * @returns {Object} A verse object
+ */
+function getNextVerse(verses) {
+  // If we've used all verses or haven't initialized, shuffle them
+  if (versesCache.currentIndex >= versesCache.shuffledVerses.length || !versesCache.shuffledVerses.length) {
+    versesCache.shuffledVerses = shuffleArray(verses.verses);
+    versesCache.currentIndex = 0;
+  }
+
+  // Get next verse
+  let verse = versesCache.shuffledVerses[versesCache.currentIndex];
+  
+  // If it's the same as the last verse and we have more verses available,
+  // skip to the next one to prevent consecutive repeats
+  if (versesCache.lastVerse && 
+      verse.reference === versesCache.lastVerse.reference && 
+      versesCache.currentIndex + 1 < versesCache.shuffledVerses.length) {
+    versesCache.currentIndex++;
+    verse = versesCache.shuffledVerses[versesCache.currentIndex];
+  }
+  
+  // Update tracking variables
+  versesCache.lastVerse = verse;
+  versesCache.currentIndex++;
+  
+  return verse;
+}
 
 /**
  * Load verses data with caching and retry mechanism
@@ -103,15 +151,7 @@ async function loadVerses() {
   try {
     // Check if verses.json exists
     if (!fs.existsSync(VERSES_PATH)) {
-      console.log('verses.json not found, running prepare script...');
-      try {
-        if (DEBUG) console.log('Running prepare script...');
-        execSync('npm run prepare', { stdio: 'inherit' });
-        if (DEBUG) console.log('Prepare script completed');
-      } catch (prepareError) {
-        console.error('Error running prepare script:', prepareError);
-        throw new Error('Failed to prepare verses data');
-      }
+      throw new Error('verses.json not found. Please ensure the file exists in the public directory.');
     }
     
     if (DEBUG) console.log(`Reading verses from ${VERSES_PATH}`);
@@ -128,7 +168,10 @@ async function loadVerses() {
         timestamp: now,
         retryCount: 0,
         maxRetries: versesCache.maxRetries,
-        retryDelay: versesCache.retryDelay
+        retryDelay: versesCache.retryDelay,
+        lastVerse: null,
+        shuffledVerses: [],
+        currentIndex: 0
       };
       
       return verses;
@@ -149,7 +192,7 @@ async function loadVerses() {
       return loadVerses(); // Recursive retry
     }
     
-    throw new Error('Failed to load verses data after retries');
+    throw error;
   }
 }
 
@@ -162,8 +205,7 @@ app.get('/', (req, res) => {
 app.get('/api/verse', async (req, res) => {
   try {
     const verses = await loadVerses();
-    const randomIndex = Math.floor(Math.random() * verses.verses.length);
-    const verse = verses.verses[randomIndex];
+    const verse = getNextVerse(verses);
     
     res.set({
       'Cache-Control': 'no-cache',

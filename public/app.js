@@ -9,7 +9,7 @@ const elements = {
 
 // Configuration
 const config = {
-  fadeDelay: 300,
+  fadeDelay: 500,
   debug: true
 };
 
@@ -21,7 +21,7 @@ function log(message, data) {
 }
 
 /**
- * Update theme text
+ * Update theme text and background
  * @param {string} theme
  */
 function setThemeText(theme) {
@@ -38,34 +38,58 @@ function setThemeText(theme) {
     return;
   }
   
-  // Only show loading text if theme is explicitly undefined
-  const text = theme === undefined ? 'loading' : 
-               theme === '' ? 'error' :
-               theme.toLowerCase();
-               
-  elements.verseTheme.textContent = text;
-  log('Theme text set to:', {
-    text: text,
-    elementContent: elements.verseTheme.textContent,
-    elementVisible: elements.verseTheme.offsetParent !== null
-  });
-
-  // Set background image based on theme
-  if (theme && theme !== '') {
-    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const imagePath = `/images/bg-${theme.toLowerCase()}${isDarkMode ? '-dark' : ''}.jpg`;
-    document.body.style.backgroundImage = `url('${imagePath}')`;
-    log('Background image:', {
-      path: imagePath,
-      isDarkMode: isDarkMode,
-      theme: theme.toLowerCase(),
-      currentStyle: document.body.style.backgroundImage
+  elements.verseTheme.classList.add('fade-out');
+  
+  setTimeout(() => {
+    // Only show loading text if theme is explicitly undefined
+    const text = theme === undefined ? 'loading' : 
+                 theme === '' ? 'error' :
+                 theme.toLowerCase();
+                 
+    elements.verseTheme.textContent = text;
+    elements.verseTheme.classList.remove('fade-out');
+    
+    log('Theme text set to:', {
+      text: text,
+      elementContent: elements.verseTheme.textContent,
+      elementVisible: elements.verseTheme.offsetParent !== null
     });
-  } else {
-    // Clear background image if no theme
-    document.body.style.backgroundImage = '';
-    log('Background image cleared');
-  }
+
+    // Set background image based on theme
+    if (theme && theme !== '') {
+      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const imagePath = `/images/bg-${theme.toLowerCase()}${isDarkMode ? '-dark' : ''}.jpg`;
+      
+      // Create new image to preload
+      const img = new Image();
+      img.onload = () => {
+        // Set the new image on the pseudo-element first
+        document.body.style.setProperty('--next-bg-image', `url('${imagePath}')`);
+        document.body.classList.add('loading-bg');
+        
+        // After transition completes, update main background
+        setTimeout(() => {
+          document.body.style.backgroundImage = `url('${imagePath}')`;
+          // Keep both backgrounds visible briefly to prevent flash
+          setTimeout(() => {
+            document.body.classList.remove('loading-bg');
+          }, 50);
+        }, 1000);
+      };
+      img.src = imagePath;
+      
+      log('Background image:', {
+        path: imagePath,
+        isDarkMode: isDarkMode,
+        theme: theme.toLowerCase()
+      });
+    } else {
+      // Clear background image if no theme
+      document.body.style.backgroundImage = '';
+      document.body.style.setProperty('--next-bg-image', 'none');
+      log('Background image cleared');
+    }
+  }, config.fadeDelay / 2);
 }
 
 /**
@@ -83,6 +107,10 @@ async function fetchVerse() {
   if (elements.newVerseBtn) {
     elements.newVerseBtn.disabled = true;
   }
+  
+  // Add fade-out classes
+  elements.verseText.classList.add('fade-out');
+  elements.verseRef.classList.add('fade-out');
   
   try {
     log('Fetching verse from API');
@@ -124,25 +152,26 @@ async function fetchVerse() {
       setThemeText('');
     }
     
-    // Update verse text
-    if (elements.verseText) {
-      elements.verseText.style.opacity = '0';
-      setTimeout(() => {
+    // Update verse text and reference after fade out
+    setTimeout(() => {
+      if (elements.verseText) {
         elements.verseText.textContent = verse.text || 'Error: No verse text';
-        elements.verseText.style.opacity = '1';
+        elements.verseText.classList.remove('fade-out');
         log('Updated verse text to:', elements.verseText.textContent);
-      }, config.fadeDelay);
-    }
-    
-    // Update reference
-    if (elements.verseRef) {
-      elements.verseRef.style.opacity = '0';
-      setTimeout(() => {
+      }
+      
+      if (elements.verseRef) {
         elements.verseRef.textContent = verse.reference || '';
-        elements.verseRef.style.opacity = '1';
+        elements.verseRef.classList.remove('fade-out');
         log('Updated verse reference to:', elements.verseRef.textContent);
-      }, config.fadeDelay);
-    }
+      }
+      
+      // Remove loading state
+      elements.verseCard.classList.remove('loading');
+      if (elements.newVerseBtn) {
+        elements.newVerseBtn.disabled = false;
+      }
+    }, config.fadeDelay);
     
   } catch (error) {
     console.error('Error in fetchVerse:', error);
@@ -152,22 +181,26 @@ async function fetchVerse() {
       stack: error.stack
     });
     
-    if (elements.verseText) {
-      elements.verseText.textContent = 'Error loading verse. Please try again.';
-    }
-    if (elements.verseRef) {
-      elements.verseRef.textContent = '';
-    }
-    setThemeText('');
-  } finally {
-    if (elements.verseCard) {
+    setTimeout(() => {
+      if (elements.verseText) {
+        elements.verseText.textContent = 'Error loading verse. Please try again.';
+        elements.verseText.classList.remove('fade-out');
+      }
+      if (elements.verseRef) {
+        elements.verseRef.textContent = '';
+        elements.verseRef.classList.remove('fade-out');
+      }
+      setThemeText('');
+      
+      // Remove loading state
       elements.verseCard.classList.remove('loading');
-    }
-    if (elements.newVerseBtn) {
-      elements.newVerseBtn.disabled = false;
-    }
-    log('Finished fetchVerse');
+      if (elements.newVerseBtn) {
+        elements.newVerseBtn.disabled = false;
+      }
+    }, config.fadeDelay);
   }
+  
+  log('Finished fetchVerse');
 }
 
 // Initialize
@@ -191,6 +224,15 @@ function init() {
     });
     log('Added click handler');
   }
+
+  // Add keyboard handler for 'n' key
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'n' && !elements.newVerseBtn.disabled) {
+      log('N key pressed');
+      fetchVerse();
+    }
+  });
+  log('Added keyboard handler');
 
   // Add dark mode listener
   const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
