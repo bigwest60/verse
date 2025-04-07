@@ -4,19 +4,22 @@ const elements = {
   verseRef: document.getElementById('verse-reference'),
   verseTheme: document.getElementById('verse-theme'),
   verseCard: document.querySelector('.verse-card'),
-  newVerseBtn: document.querySelector('.button')
+  newVerseBtn: document.querySelector('.button'),
+  bgLayer1: document.getElementById('bg-layer-1'),
+  bgLayer2: document.getElementById('bg-layer-2')
 };
 
 // Configuration
 const config = {
-  fadeDelay: 500,
+  fadeDelay: 300,
   debug: false,
   transitionDuration: 500
 };
 
-// Keep track of current background loading state
+// Keep track of current background state
 let isLoadingBackground = false;
 let currentBackgroundImage = '';
+let activeLayer = 1;
 
 // Cache for preloaded images
 const imageCache = new Map();
@@ -106,25 +109,43 @@ async function setThemeText(theme) {
       // Preload the image before starting transition
       await preloadImage(imagePath);
       
-      // Update the background image
-      document.body.style.setProperty('background-image', `url('${imagePath}')`);
-      document.body.style.setProperty('background-size', 'cover');
-      document.body.style.setProperty('background-position', 'center');
-      document.body.style.setProperty('background-repeat', 'no-repeat');
+      // Get the next background layer
+      const nextLayer = activeLayer === 1 ? elements.bgLayer2 : elements.bgLayer1;
+      const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
       
+      // Set the new image on the inactive layer
+      nextLayer.style.backgroundImage = `url('${imagePath}')`;
+      
+      // Force a reflow to ensure the browser processes the background change
+      void nextLayer.offsetWidth;
+      
+      // Start the transition by making the next layer visible
+      nextLayer.classList.add('active');
+      currentLayer.classList.remove('active');
+      
+      // Wait for transition to complete
+      await new Promise(resolve => setTimeout(resolve, config.transitionDuration));
+      
+      // Update tracking variables
       currentBackgroundImage = imagePath;
+      activeLayer = activeLayer === 1 ? 2 : 1;
+      
       log('Background updated:', imagePath);
       
     } catch (error) {
       log('Image load failed:', error);
       
       // If we have a current background, keep it
-      if (currentBackgroundImage && currentBackgroundImage !== imagePath) {
+      if (currentBackgroundImage) {
         try {
-          // Try to restore the previous background
-          await preloadImage(currentBackgroundImage);
-          document.body.style.setProperty('background-image', `url('${currentBackgroundImage}')`);
-          log('Restored previous background:', currentBackgroundImage);
+          // Try to restore the previous background if needed
+          const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
+          if (!currentLayer.style.backgroundImage.includes(currentBackgroundImage)) {
+            await preloadImage(currentBackgroundImage);
+            currentLayer.style.backgroundImage = `url('${currentBackgroundImage}')`;
+            currentLayer.classList.add('active');
+          }
+          log('Kept current background:', currentBackgroundImage);
         } catch (restoreError) {
           // If restoring fails, use fallback gradient
           const gradientColors = isDarkMode ? 
@@ -132,18 +153,22 @@ async function setThemeText(theme) {
             ['#f7fafc', '#edf2f7']; // Light mode gradient
             
           const gradient = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
-          document.body.style.setProperty('background-image', gradient);
+          const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
+          currentLayer.style.backgroundImage = gradient;
+          currentLayer.classList.add('active');
           currentBackgroundImage = '';
           log('Using fallback gradient after restore failed');
         }
       } else {
-        // If no current background or same failed image, use fallback gradient
+        // If no current background, use fallback gradient
         const gradientColors = isDarkMode ? 
           ['#1a202c', '#2d3748'] : // Dark mode gradient
           ['#f7fafc', '#edf2f7']; // Light mode gradient
           
         const gradient = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
-        document.body.style.setProperty('background-image', gradient);
+        const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
+        currentLayer.style.backgroundImage = gradient;
+        currentLayer.classList.add('active');
         currentBackgroundImage = '';
         log('Using fallback gradient (no previous background)');
       }
@@ -152,7 +177,11 @@ async function setThemeText(theme) {
     }
   } else {
     // Clear background image if no theme
-    document.body.style.setProperty('background-image', 'none');
+    const currentLayer = activeLayer === 1 ? elements.bgLayer1 : elements.bgLayer2;
+    currentLayer.style.backgroundImage = 'none';
+    currentLayer.classList.add('active');
+    const otherLayer = activeLayer === 1 ? elements.bgLayer2 : elements.bgLayer1;
+    otherLayer.classList.remove('active');
     currentBackgroundImage = '';
     isLoadingBackground = false;
     log('Background image cleared');
@@ -200,45 +229,56 @@ async function fetchVerse() {
         text: verse?.text,
         reference: verse?.reference
       });
+
+      // Re-enable button as soon as we have valid data
+      if (elements.newVerseBtn) {
+        elements.newVerseBtn.disabled = false;
+      }
+      elements.verseCard.classList.remove('loading');
     } catch (parseError) {
       console.error('Failed to parse verse JSON:', parseError);
       throw parseError;
     }
     
-    // Update theme immediately
-    if (verse && typeof verse.theme === 'string') {
-      log('Found valid theme:', verse.theme);
-      await setThemeText(verse.theme);
-    } else {
-      log('Invalid theme:', { 
-        verse: verse,
-        themeExists: 'theme' in verse,
-        themeValue: verse?.theme,
-        themeType: typeof verse?.theme
-      });
-      await setThemeText('');
-    }
+    // Start both transitions in parallel
+    const themePromise = (async () => {
+      if (verse && typeof verse.theme === 'string') {
+        log('Found valid theme:', verse.theme);
+        await setThemeText(verse.theme);
+      } else {
+        log('Invalid theme:', { 
+          verse: verse,
+          themeExists: 'theme' in verse,
+          themeValue: verse?.theme,
+          themeType: typeof verse?.theme
+        });
+        await setThemeText('');
+      }
+    })();
     
-    // Update verse text and reference after fade out
-    setTimeout(() => {
-      if (elements.verseText) {
-        elements.verseText.textContent = verse.text || 'Error: No verse text';
-        elements.verseText.classList.remove('fade-out');
-        log('Updated verse text to:', elements.verseText.textContent);
-      }
-      
-      if (elements.verseRef) {
-        elements.verseRef.textContent = verse.reference || '';
-        elements.verseRef.classList.remove('fade-out');
-        log('Updated verse reference to:', elements.verseRef.textContent);
-      }
-      
-      // Remove loading state
-      elements.verseCard.classList.remove('loading');
-      if (elements.newVerseBtn) {
-        elements.newVerseBtn.disabled = false;
-      }
-    }, config.fadeDelay);
+    // Start updating verse text immediately
+    const textPromise = new Promise(resolve => {
+      // Small initial delay to let fade-out start
+      setTimeout(() => {
+        if (elements.verseText) {
+          elements.verseText.textContent = verse.text || 'Error: No verse text';
+          elements.verseText.classList.remove('fade-out');
+          log('Updated verse text to:', elements.verseText.textContent);
+        }
+        
+        if (elements.verseRef) {
+          elements.verseRef.textContent = verse.reference || '';
+          elements.verseRef.classList.remove('fade-out');
+          log('Updated verse reference to:', elements.verseRef.textContent);
+        }
+        resolve();
+      }, 100); // Minimal delay for smooth transition
+    });
+    
+    // Wait for transitions to complete in the background
+    Promise.all([themePromise, textPromise]).catch(error => {
+      console.error('Error during transitions:', error);
+    });
     
   } catch (error) {
     console.error('Error in fetchVerse:', error);
@@ -248,23 +288,22 @@ async function fetchVerse() {
       stack: error.stack
     });
     
-    setTimeout(() => {
-      if (elements.verseText) {
-        elements.verseText.textContent = 'Error loading verse. Please try again.';
-        elements.verseText.classList.remove('fade-out');
-      }
-      if (elements.verseRef) {
-        elements.verseRef.textContent = '';
-        elements.verseRef.classList.remove('fade-out');
-      }
-      setThemeText('').catch(console.error);
-      
-      // Remove loading state
-      elements.verseCard.classList.remove('loading');
-      if (elements.newVerseBtn) {
-        elements.newVerseBtn.disabled = false;
-      }
-    }, config.fadeDelay);
+    // Show error state immediately
+    if (elements.verseText) {
+      elements.verseText.textContent = 'Error loading verse. Please try again.';
+      elements.verseText.classList.remove('fade-out');
+    }
+    if (elements.verseRef) {
+      elements.verseRef.textContent = '';
+      elements.verseRef.classList.remove('fade-out');
+    }
+    setThemeText('').catch(console.error);
+    
+    // Remove loading state and re-enable button
+    elements.verseCard.classList.remove('loading');
+    if (elements.newVerseBtn) {
+      elements.newVerseBtn.disabled = false;
+    }
   }
   
   log('Finished fetchVerse');

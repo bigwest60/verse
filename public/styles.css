@@ -34,7 +34,7 @@
   
   /* Transitions */
   --transition-speed: 0.3s;
-  --transition-timing: ease;
+  --transition-timing: ease-out;
   --transition-duration: 300ms;
   --border-radius: 8px;
   --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -74,18 +74,31 @@ body {
   padding: 0;
   min-height: 100vh;
   background-color: var(--background-color);
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Background layers */
+.background-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  position: relative;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  transition: background-image 0.5s ease-in-out;
-  will-change: background-image;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  z-index: -2;
 }
 
-/* Remove the pseudo-element since we're handling backgrounds directly */
-body::before {
-  content: '';
+.background-layer.active {
+  opacity: 1;
+}
+
+.background-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -133,13 +146,14 @@ main {
   font-size: 1.5rem;
   margin: 0 0 1.5rem;
   line-height: 1.4;
-  transition: all 0.5s ease;
+  transition: all 0.3s ease-out;
   transform-origin: center;
+  will-change: opacity, transform;
 }
 
 .verse-text.fade-out {
   opacity: 0;
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 .verse-reference {
@@ -147,23 +161,25 @@ main {
   font-style: italic;
   margin: 0 0 2rem;
   opacity: 0.9;
-  transition: all 0.5s ease;
+  transition: all 0.3s ease-out;
   transform-origin: center;
+  will-change: opacity, transform;
 }
 
 .verse-reference.fade-out {
   opacity: 0;
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 #verse-theme {
-  transition: all 0.5s ease;
+  transition: all 0.3s ease-out;
   transform-origin: center;
+  will-change: opacity, transform;
 }
 
 #verse-theme.fade-out {
   opacity: 0;
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 .button {
