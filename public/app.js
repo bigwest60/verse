@@ -62,6 +62,18 @@ function setThemeText(theme) {
       
       // Create new image to preload
       const img = new Image();
+      
+      img.onerror = () => {
+        // If image fails to load, create a fallback gradient
+        const gradientColors = isDarkMode ? 
+          ['#1a202c', '#2d3748'] : // Dark mode gradient
+          ['#f7fafc', '#edf2f7']; // Light mode gradient
+          
+        document.body.style.backgroundImage = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
+        document.body.style.setProperty('--next-bg-image', 'none');
+        log('Using fallback gradient for theme:', theme);
+      };
+      
       img.onload = () => {
         // Set the new image on the pseudo-element first
         document.body.style.setProperty('--next-bg-image', `url('${imagePath}')`);
@@ -70,12 +82,10 @@ function setThemeText(theme) {
         // After transition completes, update main background
         setTimeout(() => {
           document.body.style.backgroundImage = `url('${imagePath}')`;
-          // Keep both backgrounds visible briefly to prevent flash
-          setTimeout(() => {
-            document.body.classList.remove('loading-bg');
-          }, 50);
-        }, 1000);
+          document.body.classList.remove('loading-bg');
+        }, 500);
       };
+      
       img.src = imagePath;
       
       log('Background image:', {

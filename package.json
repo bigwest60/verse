@@ -15,7 +15,9 @@
     "build:js": "esbuild public/app.js --bundle --minify --outfile=public/app.min.js --format=esm",
     "build:css": "postcss public/styles.css -o public/styles.min.css",
     "optimize:images": "node scripts/optimize-images.js",
-    "start:prod": "NODE_ENV=production node src/index.js"
+    "start:prod": "NODE_ENV=production node src/index.js",
+    "setup": "node src/download-images.js && npm run optimize:images",
+    "prepare": "npm run setup"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

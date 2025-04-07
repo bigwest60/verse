@@ -1,13 +1,12 @@
 # Bible Verse Website
 
-A simple, elegant website that displays random Bible verses with themed background images and monetization through discreet advertising.
+A simple, elegant website that displays random Bible verses with themed background images.
 
 ## Features
 
 - Random Bible verse display
 - Themed background images
 - Mobile-responsive design
-- Non-intrusive advertising
 - Smooth transitions
 - One-click verse refresh
 

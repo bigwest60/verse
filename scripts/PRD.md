@@ -1,7 +1,7 @@
 # Bible Verse Website PRD
 
 ## Overview
-A simple, elegant website that displays random Bible verses with themed background images and monetization through discreet advertising. The website refreshes verses on page load or button click, providing daily inspiration to visitors. This solves the need for easily accessible, beautifully presented spiritual content while maintaining a sustainable service through non-intrusive advertising.
+A simple, elegant website that displays random Bible verses with themed background images. The website refreshes verses on page load or button click, providing daily inspiration to visitors.
 
 ## Core Features
 
@@ -19,12 +19,6 @@ A simple, elegant website that displays random Bible verses with themed backgrou
 - Clean, minimalist interface
 - Elegant card design for verse display
 
-### 3. Monetization
-- Discreet banner ad placement at bottom
-- Non-intrusive advertising space
-- Clear separation between content and ads
-- Placeholder for ad network integration
-
 ## User Experience
 - User Personas:
   - Daily spiritual seekers looking for inspiration
@@ -41,7 +35,6 @@ A simple, elegant website that displays random Bible verses with themed backgrou
   - Mobile-first responsive layout
   - Smooth transitions between verses
   - Clear typography for readability
-  - Subtle ad placement
 
 ## Technical Architecture
 
@@ -93,7 +86,6 @@ project/
 1. Themed background images
 2. Transition animations
 3. Expanded verse selection
-4. Ad space integration
 
 ### Phase 3: Optimization
 1. Image optimization
@@ -154,48 +146,20 @@ project/
 - Express.js server
 - Modern browser support
 - Responsive design (mobile-first)
-- Ad network compatibility
-
-## Monetization Strategy
-1. Banner ad placement
-2. Non-intrusive design
-3. Ad network integration
-4. User experience priority
-
-## Testing Strategy
-1. Responsive design testing
-2. Cross-browser compatibility
-3. Performance monitoring
-4. Ad placement verification
-
-## Maintenance
-1. Regular verse updates
-2. Image optimization
-3. Ad performance monitoring
-4. Analytics review
 
 ## Success Metrics
 1. Page views
 2. Time on site
-3. Ad click-through rate
-4. User engagement
-5. Mobile vs desktop usage
+3. User engagement
+4. Mobile vs desktop usage
 
 ## Risk Mitigation
 1. Image loading optimization
 2. Fallback verse display
-3. Ad blocker handling
-4. Performance monitoring
-5. Error logging
+3. Performance monitoring
+4. Error logging
 
 ## Appendix
-
-### Ad Integration Guidelines
-- Bottom placement
-- Clear labeling
-- Non-intrusive design
-- Mobile responsiveness
-- Loading optimization
 
 ### Image Guidelines
 - Soft, muted tones
@@ -213,7 +177,6 @@ project/
 
 ### Research Findings
 - Popular Bible verse websites analysis
-- Ad placement effectiveness studies
 - Mobile usage statistics
 - User engagement patterns
 

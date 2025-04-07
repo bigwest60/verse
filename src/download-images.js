@@ -206,11 +206,6 @@ async function generateFallbackImage(dest, theme, isDark) {
  * Download all theme images
  */
 async function downloadThemeImages() {
-  if (!UNSPLASH_ACCESS_KEY) {
-    console.error('Error: UNSPLASH_ACCESS_KEY is required in .env file');
-    process.exit(1);
-  }
-
   console.log('Starting background image download...');
   
   try {
@@ -220,9 +215,9 @@ async function downloadThemeImages() {
     let downloaded = 0;
     const total = Object.keys(THEME_IMAGES).length * 2; // Light and dark variants
     
-    // Download images for each theme
+    // Generate images for each theme
     for (const [theme, config] of Object.entries(THEME_IMAGES)) {
-      // Get light variant
+      // Generate light variant
       const filename = `bg-${theme}.jpg`;
       const destPath = path.join(IMAGES_DIR, filename);
       
@@ -231,23 +226,15 @@ async function downloadThemeImages() {
         downloaded++;
       } else {
         try {
-          const imageUrl = await getUnsplashImageUrl(config.query);
-          await downloadImage(imageUrl, destPath);
+          await generateFallbackImage(destPath, theme, false);
           downloaded++;
-          console.log(`Downloaded ${filename} (${downloaded}/${total})`);
+          console.log(`Generated ${filename} (${downloaded}/${total})`);
         } catch (err) {
-          console.error(`Failed to download ${filename}, generating fallback...`);
-          try {
-            await generateFallbackImage(destPath, theme, false);
-            downloaded++;
-            console.log(`Generated fallback for ${filename} (${downloaded}/${total})`);
-          } catch (fallbackErr) {
-            console.error(`Failed to generate fallback for ${filename}:`, fallbackErr.message);
-          }
+          console.error(`Failed to generate ${filename}:`, err.message);
         }
       }
       
-      // Get dark variant with different query
+      // Generate dark variant
       const darkFilename = `bg-${theme}-dark.jpg`;
       const darkDestPath = path.join(IMAGES_DIR, darkFilename);
       
@@ -256,38 +243,21 @@ async function downloadThemeImages() {
         downloaded++;
       } else {
         try {
-          const darkQuery = `${config.query} night dark`;
-          const imageUrl = await getUnsplashImageUrl(darkQuery);
-          await downloadImage(imageUrl, darkDestPath);
+          await generateFallbackImage(darkDestPath, theme, true);
           downloaded++;
-          console.log(`Downloaded ${darkFilename} (${downloaded}/${total})`);
+          console.log(`Generated ${darkFilename} (${downloaded}/${total})`);
         } catch (err) {
-          console.error(`Failed to download ${darkFilename}, generating fallback...`);
-          try {
-            await generateFallbackImage(darkDestPath, theme, true);
-            downloaded++;
-            console.log(`Generated fallback for ${darkFilename} (${downloaded}/${total})`);
-          } catch (fallbackErr) {
-            console.error(`Failed to generate fallback for ${darkFilename}:`, fallbackErr.message);
-          }
+          console.error(`Failed to generate ${darkFilename}:`, err.message);
         }
       }
-      
-      // Add a small delay between themes to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    
-    if (downloaded === 0) {
-      throw new Error('Failed to download or generate any images');
     }
     
     console.log(`\nDownload complete! Successfully downloaded ${downloaded}/${total} images.`);
-    
   } catch (err) {
-    console.error('Error during image download:', err);
+    console.error('Error during image generation:', err);
     process.exit(1);
   }
 }
 
-// Run the download process
+// Run the download
 downloadThemeImages(); 
