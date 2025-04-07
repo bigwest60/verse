@@ -31,7 +31,16 @@ const THEME_IMAGES = {
   courage: { query: 'lion animal nature', light: true, dark: true },
   mission: { query: 'compass journey', light: true, dark: true },
   creation: { query: 'galaxy space stars', light: true, dark: true },
-  heaven: { query: 'clouds sky sunset', light: true, dark: true }
+  heaven: { query: 'clouds sky sunset', light: true, dark: true },
+  salvation: { query: 'light breaking through clouds', light: true, dark: true },
+  stewardship: { query: 'garden harvest nature', light: true, dark: true },
+  evangelism: { query: 'open door light', light: true, dark: true },
+  prayer: { query: 'peaceful mountain sunrise', light: true, dark: true },
+  holiness: { query: 'pure white lily flower', light: true, dark: true },
+  joy: { query: 'waterfall rainbow nature', light: true, dark: true },
+  discipleship: { query: 'path following footsteps', light: true, dark: true },
+  service: { query: 'helping hands community', light: true, dark: true },
+  unity: { query: 'flock birds flying together', light: true, dark: true }
 };
 
 // Theme colors for fallback images
@@ -54,7 +63,16 @@ const THEME_COLORS = {
   courage: { light: ['#ffe6e6', '#fff2f2'], dark: ['#4d3333', '#332929'] },
   mission: { light: ['#e6d6e6', '#f2ecf2'], dark: ['#332633', '#2d262d'] },
   creation: { light: ['#d6ffe6', '#ecfff2'], dark: ['#264d33', '#26332d'] },
-  heaven: { light: ['#e6e6ff', '#f2f2ff'], dark: ['#33334d', '#292933'] }
+  heaven: { light: ['#e6e6ff', '#f2f2ff'], dark: ['#33334d', '#292933'] },
+  salvation: { light: ['#fff7d6', '#fffbec'], dark: ['#4d4726', '#333326'] },
+  stewardship: { light: ['#d6ffcc', '#ecffe6'], dark: ['#264d1f', '#26331f'] },
+  evangelism: { light: ['#ffe6cc', '#fff2e6'], dark: ['#4d331f', '#332620'] },
+  prayer: { light: ['#cce6ff', '#e6f2ff'], dark: ['#1f334d', '#1f2633'] },
+  holiness: { light: ['#ffffff', '#f7f7f7'], dark: ['#404040', '#333333'] },
+  joy: { light: ['#ffd6cc', '#ffece6'], dark: ['#4d261f', '#332620'] },
+  discipleship: { light: ['#e6ccff', '#f2e6ff'], dark: ['#331f4d', '#261f33'] },
+  service: { light: ['#ccffd6', '#e6ffe6'], dark: ['#1f4d26', '#1f3326'] },
+  unity: { light: ['#d6ccff', '#e6e6ff'], dark: ['#261f4d', '#1f1f33'] }
 };
 
 /**

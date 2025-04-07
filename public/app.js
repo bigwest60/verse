@@ -10,8 +10,16 @@ const elements = {
 // Configuration
 const config = {
   fadeDelay: 500,
-  debug: true
+  debug: false,
+  transitionDuration: 500
 };
+
+// Keep track of current background loading state
+let isLoadingBackground = false;
+let currentBackgroundImage = '';
+
+// Cache for preloaded images
+const imageCache = new Map();
 
 // Debug logging
 function log(message, data) {
@@ -21,10 +29,31 @@ function log(message, data) {
 }
 
 /**
+ * Preload an image and cache it
+ * @param {string} src Image source URL
+ * @returns {Promise} Promise that resolves when image is loaded
+ */
+function preloadImage(src) {
+  if (imageCache.has(src)) {
+    return Promise.resolve(imageCache.get(src));
+  }
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      imageCache.set(src, img);
+      resolve(img);
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+/**
  * Update theme text and background
  * @param {string} theme
  */
-function setThemeText(theme) {
+async function setThemeText(theme) {
   log('Setting theme:', {
     value: theme,
     type: typeof theme,
@@ -40,66 +69,94 @@ function setThemeText(theme) {
   
   elements.verseTheme.classList.add('fade-out');
   
-  setTimeout(() => {
-    // Only show loading text if theme is explicitly undefined
-    const text = theme === undefined ? 'loading' : 
-                 theme === '' ? 'error' :
-                 theme.toLowerCase();
-                 
-    elements.verseTheme.textContent = text;
-    elements.verseTheme.classList.remove('fade-out');
-    
-    log('Theme text set to:', {
-      text: text,
-      elementContent: elements.verseTheme.textContent,
-      elementVisible: elements.verseTheme.offsetParent !== null
-    });
+  // Only show loading text if theme is explicitly undefined
+  const text = theme === undefined ? 'loading' : 
+               theme === '' ? 'error' :
+               theme.toLowerCase();
+               
+  elements.verseTheme.textContent = text;
+  elements.verseTheme.classList.remove('fade-out');
+  
+  log('Theme text set to:', {
+    text: text,
+    elementContent: elements.verseTheme.textContent,
+    elementVisible: elements.verseTheme.offsetParent !== null
+  });
 
-    // Set background image based on theme
-    if (theme && theme !== '') {
-      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const imagePath = `/images/bg-${theme.toLowerCase()}${isDarkMode ? '-dark' : ''}.jpg`;
+  // Set background image based on theme
+  if (theme && theme !== '') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const imagePath = `/images/bg-${theme.toLowerCase()}${isDarkMode ? '-dark' : ''}.jpg`;
+    
+    // Don't transition to the same image
+    if (currentBackgroundImage === imagePath) {
+      log('Same background image, skipping transition');
+      return;
+    }
+
+    // Prevent multiple simultaneous transitions
+    if (isLoadingBackground) {
+      log('Already loading background, skipping');
+      return;
+    }
+    
+    isLoadingBackground = true;
+
+    try {
+      // Preload the image before starting transition
+      await preloadImage(imagePath);
       
-      // Create new image to preload
-      const img = new Image();
+      // Update the background image
+      document.body.style.setProperty('background-image', `url('${imagePath}')`);
+      document.body.style.setProperty('background-size', 'cover');
+      document.body.style.setProperty('background-position', 'center');
+      document.body.style.setProperty('background-repeat', 'no-repeat');
       
-      img.onerror = () => {
-        // If image fails to load, create a fallback gradient
+      currentBackgroundImage = imagePath;
+      log('Background updated:', imagePath);
+      
+    } catch (error) {
+      log('Image load failed:', error);
+      
+      // If we have a current background, keep it
+      if (currentBackgroundImage && currentBackgroundImage !== imagePath) {
+        try {
+          // Try to restore the previous background
+          await preloadImage(currentBackgroundImage);
+          document.body.style.setProperty('background-image', `url('${currentBackgroundImage}')`);
+          log('Restored previous background:', currentBackgroundImage);
+        } catch (restoreError) {
+          // If restoring fails, use fallback gradient
+          const gradientColors = isDarkMode ? 
+            ['#1a202c', '#2d3748'] : // Dark mode gradient
+            ['#f7fafc', '#edf2f7']; // Light mode gradient
+            
+          const gradient = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
+          document.body.style.setProperty('background-image', gradient);
+          currentBackgroundImage = '';
+          log('Using fallback gradient after restore failed');
+        }
+      } else {
+        // If no current background or same failed image, use fallback gradient
         const gradientColors = isDarkMode ? 
           ['#1a202c', '#2d3748'] : // Dark mode gradient
           ['#f7fafc', '#edf2f7']; // Light mode gradient
           
-        document.body.style.backgroundImage = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
-        document.body.style.setProperty('--next-bg-image', 'none');
-        log('Using fallback gradient for theme:', theme);
-      };
-      
-      img.onload = () => {
-        // Set the new image on the pseudo-element first
-        document.body.style.setProperty('--next-bg-image', `url('${imagePath}')`);
-        document.body.classList.add('loading-bg');
-        
-        // After transition completes, update main background
-        setTimeout(() => {
-          document.body.style.backgroundImage = `url('${imagePath}')`;
-          document.body.classList.remove('loading-bg');
-        }, 500);
-      };
-      
-      img.src = imagePath;
-      
-      log('Background image:', {
-        path: imagePath,
-        isDarkMode: isDarkMode,
-        theme: theme.toLowerCase()
-      });
-    } else {
-      // Clear background image if no theme
-      document.body.style.backgroundImage = '';
-      document.body.style.setProperty('--next-bg-image', 'none');
-      log('Background image cleared');
+        const gradient = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
+        document.body.style.setProperty('background-image', gradient);
+        currentBackgroundImage = '';
+        log('Using fallback gradient (no previous background)');
+      }
+    } finally {
+      isLoadingBackground = false;
     }
-  }, config.fadeDelay / 2);
+  } else {
+    // Clear background image if no theme
+    document.body.style.setProperty('background-image', 'none');
+    currentBackgroundImage = '';
+    isLoadingBackground = false;
+    log('Background image cleared');
+  }
 }
 
 /**
@@ -151,7 +208,7 @@ async function fetchVerse() {
     // Update theme immediately
     if (verse && typeof verse.theme === 'string') {
       log('Found valid theme:', verse.theme);
-      setThemeText(verse.theme);
+      await setThemeText(verse.theme);
     } else {
       log('Invalid theme:', { 
         verse: verse,
@@ -159,7 +216,7 @@ async function fetchVerse() {
         themeValue: verse?.theme,
         themeType: typeof verse?.theme
       });
-      setThemeText('');
+      await setThemeText('');
     }
     
     // Update verse text and reference after fade out
@@ -200,7 +257,7 @@ async function fetchVerse() {
         elements.verseRef.textContent = '';
         elements.verseRef.classList.remove('fade-out');
       }
-      setThemeText('');
+      setThemeText('').catch(console.error);
       
       // Remove loading state
       elements.verseCard.classList.remove('loading');
