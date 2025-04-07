@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+    <style>
+        canvas {
+            background: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="icon" width="192" height="192"></canvas>
+    <script>
+        const canvas = document.getElementById('icon');
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#4a5568';
+        ctx.fillRect(0, 0, 192, 192);
+        
+        // Text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 120px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📖', 96, 96);
+        
+        // Download
+        const link = document.createElement('a');
+        link.download = 'icon-192.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    </script>
+</body>
+</html> 
