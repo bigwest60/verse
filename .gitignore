@@ -6,9 +6,9 @@ package-lock.json
 .env
 
 # Generated files
-public/verses.json
-public/images/*
-!public/images/.gitkeep
+# public/verses.json
+# public/images/*
+# !public/images/.gitkeep
 
 # Logs
 *.log
