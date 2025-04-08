@@ -30,13 +30,6 @@ const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 const theme = localStorage.getItem('theme') || (prefersDark.matches ? 'dark' : 'light');
 document.documentElement.setAttribute('data-theme', theme);
 
-// Debug logging
-function log(message, data) {
-  if (config.debug) {
-    console.log(`[DEBUG] ${message}`, data || '');
-  }
-}
-
 /**
  * Preload an image and cache it
  * @param {string} src Image source URL
@@ -63,19 +56,8 @@ function preloadImage(src) {
  * @param {string} theme
  */
 async function setThemeText(theme) {
-  log('Setting theme:', {
-    value: theme,
-    type: typeof theme,
-    length: theme?.length,
-    isUndefined: theme === undefined,
-    isEmpty: theme === ''
-  });
-  
   const themeElement = verseCard.querySelector('.verse-theme');
-  if (!themeElement) {
-    console.error('Theme element not found');
-    return;
-  }
+  if (!themeElement) return;
   
   themeElement.classList.add('fade-out');
   
@@ -86,29 +68,17 @@ async function setThemeText(theme) {
                
   themeElement.textContent = text;
   themeElement.classList.remove('fade-out');
-  
-  log('Theme text set to:', {
-    text: text,
-    elementContent: themeElement.textContent,
-    elementVisible: themeElement.offsetParent !== null
-  });
 
   // Set background image based on theme
   if (theme && theme !== '') {
     const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     const imagePath = `/images/bg-${theme.toLowerCase()}${isDarkMode ? '-dark' : ''}.jpg`;
-    
+
     // Don't transition to the same image
-    if (currentBackgroundImage === imagePath) {
-      log('Same background image, skipping transition');
-      return;
-    }
+    if (currentBackgroundImage === imagePath) return;
 
     // Prevent multiple simultaneous transitions
-    if (isLoadingBackground) {
-      log('Already loading background, skipping');
-      return;
-    }
+    if (isLoadingBackground) return;
     
     isLoadingBackground = true;
 
@@ -117,94 +87,57 @@ async function setThemeText(theme) {
       await preloadImage(imagePath);
       
       // Get the next background layer
-      const nextLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-2' : 'bg-layer-1');
-      const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
+      const nextLayer = document.getElementById(`bg-layer-${activeLayer === 1 ? '2' : '1'}`);
+      const currentLayer = document.getElementById(`bg-layer-${activeLayer}`);
       
       if (!nextLayer || !currentLayer) {
         throw new Error('Background layers not found');
       }
+
+      // Set up the next layer with the new image
+      nextLayer.style.opacity = '0';
+      nextLayer.style.backgroundImage = `url("${imagePath}")`;
+      nextLayer.classList.remove('active');
       
-      // Set the new image on the inactive layer
-      nextLayer.style.backgroundImage = `url('${imagePath}')`;
-      
-      // Force a reflow to ensure the browser processes the background change
+      // Force a reflow
       void nextLayer.offsetWidth;
       
-      // Start the transition by making the next layer visible
+      // Start transition
+      nextLayer.style.opacity = '1';
       nextLayer.classList.add('active');
-      currentLayer.classList.remove('active');
       
-      // Wait for transition to complete
-      await new Promise(resolve => setTimeout(resolve, config.transitionDuration));
+      // Hide current layer
+      currentLayer.classList.remove('active');
+      currentLayer.style.opacity = '0';
       
       // Update tracking variables
       currentBackgroundImage = imagePath;
       activeLayer = activeLayer === 1 ? 2 : 1;
       
-      log('Background updated:', imagePath);
+      // Wait for transition to complete
+      await new Promise(resolve => setTimeout(resolve, config.transitionDuration));
+      
+      // Clean up old layer
+      currentLayer.style.backgroundImage = 'none';
       
     } catch (error) {
-      log('Image load failed:', error);
-      
       // If we have a current background, keep it
       if (currentBackgroundImage) {
         try {
           // Try to restore the previous background if needed
-          const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
+          const currentLayer = document.getElementById(`bg-layer-${activeLayer}`);
           if (currentLayer && !currentLayer.style.backgroundImage.includes(currentBackgroundImage)) {
             await preloadImage(currentBackgroundImage);
-            currentLayer.style.backgroundImage = `url('${currentBackgroundImage}')`;
+            currentLayer.style.backgroundImage = `url("${currentBackgroundImage}")`;
             currentLayer.classList.add('active');
           }
-          log('Kept current background:', currentBackgroundImage);
-        } catch (restoreError) {
-          // If restoring fails, use fallback gradient
-          const gradientColors = isDarkMode ? 
-            ['#1a202c', '#2d3748'] : // Dark mode gradient
-            ['#f7fafc', '#edf2f7']; // Light mode gradient
-            
-          const gradient = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
-          const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
-          if (currentLayer) {
-            currentLayer.style.backgroundImage = gradient;
-            currentLayer.classList.add('active');
-          }
-          currentBackgroundImage = '';
-          log('Using fallback gradient after restore failed');
+        } catch (e) {
+          // Silently fail if restore fails
         }
-      } else {
-        // If no current background, use fallback gradient
-        const gradientColors = isDarkMode ? 
-          ['#1a202c', '#2d3748'] : // Dark mode gradient
-          ['#f7fafc', '#edf2f7']; // Light mode gradient
-          
-        const gradient = `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`;
-        const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
-        if (currentLayer) {
-          currentLayer.style.backgroundImage = gradient;
-          currentLayer.classList.add('active');
-        }
-        currentBackgroundImage = '';
-        log('Using fallback gradient (no previous background)');
       }
     } finally {
       isLoadingBackground = false;
     }
-  } else {
-    // Clear background image if no theme
-    const currentLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-1' : 'bg-layer-2');
-    const otherLayer = document.getElementById(activeLayer === 1 ? 'bg-layer-2' : 'bg-layer-1');
-    
-    if (currentLayer) {
-      currentLayer.style.backgroundImage = 'none';
-      currentLayer.classList.add('active');
-    }
-    if (otherLayer) {
-      otherLayer.classList.remove('active');
-    }
-    currentBackgroundImage = '';
-    isLoadingBackground = false;
-    log('Background image cleared');
   }
 }
 
@@ -212,9 +145,10 @@ async function setThemeText(theme) {
  * Fetch and display a new verse
  */
 async function fetchVerse() {
-  if (isLoading) return;
+  if (!verseCard || verseCard.classList.contains('loading')) {
+    return;
+  }
   
-  isLoading = true;
   verseCard.classList.add('loading');
   if (newVerseBtn) {
     newVerseBtn.disabled = true;
@@ -225,109 +159,57 @@ async function fetchVerse() {
   verseReference.classList.add('fade-out');
   
   try {
-    log('Fetching verse from API');
-    const response = await fetch('/api/verse');
+    // Get random verse from local data
+    const verse = window.VERSES[Math.floor(Math.random() * window.VERSES.length)];
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch verse: ${response.status} ${response.statusText}`);
+    // Update current verse for sharing
+    currentVerse = verse;
+    
+    // Update theme immediately
+    if (verse && typeof verse.theme === 'string') {
+      setThemeText(verse.theme);
+    } else {
+      setThemeText('');
     }
     
-    const responseText = await response.text();
-    log('Raw API response:', responseText);
-    
-    let verse;
-    try {
-      verse = JSON.parse(responseText);
-      log('Parsed verse data:', { 
-        hasVerse: !!verse,
-        theme: verse?.theme,
-        themeType: typeof verse?.theme,
-        text: verse?.text,
-        reference: verse?.reference
-      });
-
-      // Re-enable button as soon as we have valid data
+    // Update verse text and reference after fade out
+    setTimeout(() => {
+      if (verseText) {
+        verseText.textContent = verse.text || 'Error: No verse text';
+        verseText.classList.remove('fade-out');
+      }
+      
+      if (verseReference) {
+        verseReference.textContent = verse.reference || '';
+        verseReference.classList.remove('fade-out');
+      }
+      
+      // Remove loading state
+      verseCard.classList.remove('loading');
       if (newVerseBtn) {
         newVerseBtn.disabled = false;
       }
-      verseCard.classList.remove('loading');
-    } catch (parseError) {
-      console.error('Failed to parse verse JSON:', parseError);
-      throw parseError;
-    }
-    
-    // Start both transitions in parallel
-    const themePromise = (async () => {
-      if (verse && typeof verse.theme === 'string') {
-        log('Found valid theme:', verse.theme);
-        await setThemeText(verse.theme);
-      } else {
-        log('Invalid theme:', { 
-          verse: verse,
-          themeExists: 'theme' in verse,
-          themeValue: verse?.theme,
-          themeType: typeof verse?.theme
-        });
-        await setThemeText('');
-      }
-    })();
-    
-    // Start updating verse text immediately
-    const textPromise = new Promise(resolve => {
-      // Small initial delay to let fade-out start
-      setTimeout(() => {
-        if (verseText) {
-          verseText.textContent = verse.text || 'Error: No verse text';
-          verseText.classList.remove('fade-out');
-          log('Updated verse text to:', verseText.textContent);
-        }
-        
-        if (verseReference) {
-          verseReference.textContent = verse.reference || '';
-          verseReference.classList.remove('fade-out');
-          log('Updated verse reference to:', verseReference.textContent);
-        }
-        resolve();
-      }, 100); // Minimal delay for smooth transition
-    });
-    
-    // Wait for transitions to complete in the background
-    Promise.all([themePromise, textPromise]).catch(error => {
-      console.error('Error during transitions:', error);
-    });
-    
-    // Update current verse
-    currentVerse = verse;
+    }, config.fadeDelay);
     
   } catch (error) {
-    console.error('Error in fetchVerse:', error);
-    log('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    
-    // Show error state immediately
-    if (verseText) {
-      verseText.textContent = 'Error loading verse. Please try again.';
-      verseText.classList.remove('fade-out');
-    }
-    if (verseReference) {
-      verseReference.textContent = '';
-      verseReference.classList.remove('fade-out');
-    }
-    setThemeText('').catch(console.error);
-    
-    // Remove loading state and re-enable button
-    verseCard.classList.remove('loading');
-    if (newVerseBtn) {
-      newVerseBtn.disabled = false;
-    }
-  } finally {
-    isLoading = false;
+    setTimeout(() => {
+      if (verseText) {
+        verseText.textContent = 'Error loading verse. Please try again.';
+        verseText.classList.remove('fade-out');
+      }
+      if (verseReference) {
+        verseReference.textContent = '';
+        verseReference.classList.remove('fade-out');
+      }
+      setThemeText('');
+      
+      // Remove loading state
+      verseCard.classList.remove('loading');
+      if (newVerseBtn) {
+        newVerseBtn.disabled = false;
+      }
+    }, config.fadeDelay);
   }
-  
-  log('Finished fetchVerse');
 }
 
 // Functions
@@ -341,7 +223,8 @@ function toggleTheme() {
     // Remove focus from the theme toggle button
     document.getElementById('themeToggle').blur();
     
-    if (currentVerse) {
+    // Update background for current verse theme
+    if (currentVerse && currentVerse.theme) {
         setThemeText(currentVerse.theme);
     }
 }
@@ -359,7 +242,6 @@ async function shareVerse() {
             });
         } catch (error) {
             if (error.name !== 'AbortError') {
-                console.error('Error sharing:', error);
                 fallbackShare(shareText);
             }
         }
@@ -382,7 +264,6 @@ function fallbackShare(text) {
         document.execCommand('copy');
         alert('Verse copied to clipboard!');
     } catch (error) {
-        console.error('Error copying to clipboard:', error);
         alert('Could not copy verse. Please try again.');
     }
     
@@ -391,12 +272,9 @@ function fallbackShare(text) {
 
 // Initialize
 function init() {
-  log('Initializing app');
-  
   // Initialize DOM elements
   verseCard = document.getElementById('verseCard');
   if (!verseCard) {
-    console.error('Missing verseCard');
     return;
   }
   
@@ -408,11 +286,8 @@ function init() {
   
   // Verify all required elements exist
   if (!verseText || !verseReference || !newVerseBtn || !shareBtn || !themeToggle) {
-    console.error('Missing required DOM elements');
     return;
   }
-  
-  log('Found all required DOM elements');
 
   // Add event listeners
   newVerseBtn.addEventListener('click', fetchVerse);
@@ -451,18 +326,15 @@ function init() {
         break;
     }
   });
-  log('Added keyboard shortcuts');
 
   // Add dark mode listener
   const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
   darkModeMediaQuery.addEventListener('change', () => {
-    log('Dark mode preference changed');
     const currentTheme = verseCard.querySelector('.verse-theme')?.textContent?.trim().toLowerCase();
     if (currentTheme && !['loading', 'error'].includes(currentTheme)) {
       setThemeText(currentTheme);
     }
   });
-  log('Added dark mode listener');
   
   // Add tabindex to theme toggle to prevent focus
   themeToggle.setAttribute('tabindex', '-1');
@@ -477,14 +349,11 @@ function init() {
   
   // Fetch initial verse
   fetchVerse();
-  log('Initialization complete');
 }
 
 // Run initialization
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
-  log('Waiting for DOMContentLoaded');
 } else {
   init();
-  log('DOM already loaded, initializing');
 } 

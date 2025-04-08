@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#1a1a1a"/>
+  
+  <!-- Deep shadow -->
+  <path d="M270 150v240M190 210h160" 
+        stroke="#000000" 
+        stroke-width="64" 
+        stroke-linecap="square"/>
+        
+  <!-- Cross base shadow -->
+  <path d="M266 146v240M186 206h160" 
+        stroke="#333333" 
+        stroke-width="56" 
+        stroke-linecap="square"/>
+        
+  <!-- Cross base layer -->
+  <path d="M256 136v240M176 196h160" 
+        stroke="#808080" 
+        stroke-width="48" 
+        stroke-linecap="square"/>
+  
+  <!-- Cross main body -->
+  <path d="M256 136v240M176 196h160" 
+        stroke="#ffffff" 
+        stroke-width="40" 
+        stroke-linecap="square"/>
+        
+  <!-- Left/Top highlight -->
+  <path d="M252 136v240M172 196h160" 
+        stroke="#ffffff" 
+        stroke-width="4" 
+        stroke-linecap="square"/>
+        
+  <!-- Right/Bottom shadow -->
+  <path d="M260 136v240M180 196h160" 
+        stroke="#666666" 
+        stroke-width="4" 
+        stroke-linecap="square"/>
+</svg> 

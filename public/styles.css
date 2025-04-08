@@ -1,65 +1,57 @@
-/* Dark mode detection */
+/* Base theme (light mode) */
 :root {
   color-scheme: light dark;
   --theme-color: #4a5568;
-  --theme-overlay: rgba(74, 85, 104, 0.1);
-}
-
-:root {
-  /* Base colors */
-  --primary-color: #4a5568;
-  --primary-hover: #3a5d97;
-  --primary-focus: #8aa4d4;
+  --theme-overlay: rgba(255, 255, 255, 0.1);
   --text-color: #2d3748;
   --text-muted: #666;
-  --background-color: #ffffff;
-  --card-background: rgba(45, 55, 72, 0.15);
+  --background-color: #f0f2f5;
+  --card-background: #ffffff;
   --shadow-color: rgba(0, 0, 0, 0.1);
-  --border-color: #eaeaea;
+  --border-color: rgba(0, 0, 0, 0.1);
   --theme-text-color: rgba(45, 55, 72, 0.95);
-  
-  /* Spacing */
-  --spacing-xs: 0.3rem;
-  --spacing-sm: 0.7rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  
-  /* Borders */
-  --border-radius-sm: 4px;
-  --border-radius-md: 6px;
-  --border-radius-lg: 12px;
-  
-  /* Layout */
-  --max-width: 600px;
-  
-  /* Transitions */
-  --transition-speed: 0.3s;
-  --transition-timing: ease-out;
-  --transition-duration: 300ms;
-  --border-radius: 8px;
-  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --button-background: #4a5568;
   --button-hover: #2d3748;
   --button-active: #1a202c;
   --button-text: #ffffff;
+  --icon-color: #000000;
+  --transition-duration: 0.3s;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Sizing */
+  --max-width: 800px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
+  
+  /* Shadows */
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Dark mode variables */
 [data-theme="dark"] {
+  --theme-color: #1a1a1a;
+  --theme-overlay: rgba(0, 0, 0, 0.4);
   --text-color: #e2e8f0;
   --text-muted: #a0a0a0;
   --background-color: #1a202c;
-  --card-background: rgba(226, 232, 240, 0.15);
+  --card-background: rgba(26, 32, 44, 0.95);
   --shadow-color: rgba(0, 0, 0, 0.3);
-  --border-color: #2a2a2a;
-  --theme-color: #1a1a1a;
-  --primary-color: #a0aec0;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --theme-text-color: rgba(226, 232, 240, 0.95);
   --button-background: #4a5568;
   --button-hover: #2d3748;
   --button-active: #1a202c;
   --button-text: #ffffff;
-  --theme-text-color: rgba(226, 232, 240, 0.95);
+  --icon-color: #ffffff;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Base styles */
@@ -90,16 +82,28 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  z-index: -2;
+  pointer-events: none;
+  will-change: opacity;
+  transition: opacity var(--transition-duration) ease-in-out;
+  z-index: 1;
 }
 
 .background-layer.active {
   opacity: 1;
+  z-index: 2;
+}
+
+#bg-layer-1, #bg-layer-2 {
+  background-color: transparent;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .background-overlay {
@@ -108,15 +112,18 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.3);
-  z-index: -1;
+  background-color: var(--theme-overlay);
+  pointer-events: none;
+  z-index: 3;
+  transition: background-color var(--transition-duration) ease-out;
 }
 
 .app-container {
+  position: relative;
+  z-index: 4;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  position: relative;
 }
 
 main {
@@ -136,7 +143,8 @@ main {
   max-width: var(--max-width);
   width: 100%;
   margin: 0 auto;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transform-origin: center;
   transition: all var(--transition-duration) ease-out;
   will-change: transform, opacity, background;
@@ -145,6 +153,7 @@ main {
   flex-direction: column;
   align-items: center;
   color: var(--text-color);
+  border: 1px solid var(--border-color);
 }
 
 /* Remove this override as it's no longer needed */
@@ -245,21 +254,7 @@ main {
 
 /* Background transition */
 .background-transition {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-size: cover;
-  background-position: center;
-  opacity: 0;
-  transition: opacity var(--transition-duration) ease-out;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.background-transition.active {
-  opacity: 1;
+  display: none;
 }
 
 /* Header styles */
@@ -273,46 +268,98 @@ header {
   z-index: 10;
 }
 
-#themeToggle,
-.share-button,
-.help-button {
+/* Icon button base styles */
+header #themeToggle,
+header .share-button,
+header .help-button {
   background: none;
   border: none;
   padding: 0.5rem;
   cursor: pointer;
-  color: var(--text-color);
-  opacity: 0.8;
-  transition: opacity var(--transition-duration) ease-out;
-  outline: none;
-  -webkit-tap-highlight-color: transparent; /* Prevent tap highlight on mobile */
-}
-
-#themeToggle:hover,
-.share-button:hover,
-.help-button:hover {
   opacity: 1;
+  position: relative;
+  z-index: 11;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
-#themeToggle:focus:not(:focus-visible),
-.share-button:focus:not(:focus-visible),
-.help-button:focus:not(:focus-visible) {
-  outline: none;
-  box-shadow: none;
-}
-
-#themeToggle:focus-visible,
-.share-button:focus-visible,
-.help-button:focus-visible {
-  outline: 3px solid var(--primary-focus);
-  outline-offset: 2px;
-  opacity: 1;
-}
-
-#themeToggle svg,
-.share-button svg,
-.help-button svg {
+/* SVG styles for light mode (default) */
+header #themeToggle svg,
+header .share-button svg,
+header .help-button svg {
   width: 24px;
   height: 24px;
+  stroke: var(--text-color);
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+/* Ensure all SVG paths and elements use the same properties */
+header #themeToggle svg path,
+header #themeToggle svg circle,
+header #themeToggle svg line,
+header .share-button svg path,
+header .share-button svg circle,
+header .share-button svg line,
+header .help-button svg path,
+header .help-button svg circle,
+header .help-button svg line {
+  stroke: var(--text-color);
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] header #themeToggle svg,
+[data-theme="dark"] header .share-button svg,
+[data-theme="dark"] header .help-button svg,
+[data-theme="dark"] header #themeToggle svg path,
+[data-theme="dark"] header #themeToggle svg circle,
+[data-theme="dark"] header #themeToggle svg line,
+[data-theme="dark"] header .share-button svg path,
+[data-theme="dark"] header .share-button svg circle,
+[data-theme="dark"] header .share-button svg line,
+[data-theme="dark"] header .help-button svg path,
+[data-theme="dark"] header .help-button svg circle,
+[data-theme="dark"] header .help-button svg line {
+  stroke: var(--text-color);
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+/* Remove any transitions that might interfere */
+header #themeToggle svg *,
+header .share-button svg *,
+header .help-button svg * {
+  transition: none !important;
+}
+
+/* Hover effects */
+header #themeToggle:hover,
+header .share-button:hover,
+header .help-button:hover {
+  opacity: 0.8;
+}
+
+/* Theme toggle states */
+#themeToggle .sun-icon {
+  display: none;
+}
+
+#themeToggle .moon-icon {
+  display: block;
+}
+
+[data-theme="dark"] #themeToggle .sun-icon {
+  display: block;
+}
+
+[data-theme="dark"] #themeToggle .moon-icon {
+  display: none;
 }
 
 /* Main content styles */
@@ -428,20 +475,4 @@ header {
   footer {
     display: none;
   }
-}
-
-#themeToggle .sun-icon {
-  display: none;
-}
-
-#themeToggle .moon-icon {
-  display: block;
-}
-
-[data-theme="dark"] #themeToggle .sun-icon {
-  display: block;
-}
-
-[data-theme="dark"] #themeToggle .moon-icon {
-  display: none;
 } 
