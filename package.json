@@ -20,7 +20,8 @@
     "prepare": "npm run setup",
     "static": "node scripts/generate-static.js",
     "serve:static": "npx serve dist",
-    "knip": "knip"
+    "knip": "knip",
+    "build:static": "npm run build && npm run static"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

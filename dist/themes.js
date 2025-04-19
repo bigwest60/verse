@@ -1,1 +1,0 @@
-window.AVAILABLE_THEMES = ["care","courage","creation","discipleship","evangelism","faith","fruit","future","guidance","heaven","holiness","hope","joy","love","mission","newness","peace","prayer","purpose","refuge","rest","salvation","service","stewardship","strength","transformation","trust","unity","wisdom","worship"];

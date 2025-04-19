@@ -1,149 +1,138 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Read verses data
-const versesData = JSON.parse(fs.readFileSync('public/verses.json', 'utf8'));
-const { verses } = versesData;
-
-// Create dist directory
-const distDir = 'dist';
-if (!fs.existsSync(distDir)) {
-  fs.mkdirSync(distDir);
-}
-
-// Copy static assets
-const staticFiles = [
-  'styles.min.css',
-  'app.min.js',
-  'help.html',
-  'icon-192.png',
-  'icon-512.png',
-  'icon.svg',
-  'apple-touch-icon.png',
-  'apple-touch-icon-precomposed.png',
-  'manifest.json'
-];
-
-staticFiles.forEach(file => {
-  if (fs.existsSync(`public/${file}`)) {
-    fs.copyFileSync(`public/${file}`, `dist/${file}`);
+// Helper function to ensure directory exists
+const ensureDirExists = (filePath) => {
+  const dirname = path.dirname(filePath);
+  if (fs.existsSync(dirname)) {
+    return true;
   }
-});
+  ensureDirExists(dirname);
+  fs.mkdirSync(dirname);
+};
 
-// Copy images directory if it exists
-if (fs.existsSync('public/images')) {
-  fs.cpSync('public/images', 'dist/images', { recursive: true });
-}
+// Get current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Create verses.js with the verses data
-const versesJs = `window.VERSES = ${JSON.stringify(verses, null, 2)};`;
-fs.writeFileSync('dist/verses.js', versesJs);
+// --- Configuration ---
+const PUBLIC_DIR = path.join(__dirname, '../public');
+const DIST_DIR = path.join(__dirname, '../dist');
+const HTML_TEMPLATE_PATH = path.join(PUBLIC_DIR, 'index.html');
+const ESBUILD_META_PATH = path.join(__dirname, '../esbuild-meta.json');
+const CSS_MANIFEST_PATH = path.join(__dirname, '.css-manifest.txt');
 
-// Get list of available theme images
-const availableThemes = new Set();
-if (fs.existsSync('public/images')) {
-  fs.readdirSync('public/images').forEach(file => {
-    const match = file.match(/^bg-(.+?)(?:-dark)?\.jpg$/);
-    if (match) {
-      availableThemes.add(match[1]);
+// --- Main Function ---
+function generateStaticSite() {
+  console.log('Generating static site...');
+
+  // 1. Clean and create dist directory
+  console.log(`Cleaning and creating ${DIST_DIR}...`);
+  if (fs.existsSync(DIST_DIR)) {
+    fs.rmSync(DIST_DIR, { recursive: true, force: true });
+  }
+  fs.mkdirSync(DIST_DIR, { recursive: true });
+
+  // 2. Read hashed asset filenames
+  console.log('Reading asset manifests...');
+  let jsFilename = 'app.js'; // Default fallback
+  let cssFilename = 'styles.css'; // Default fallback
+
+  try {
+    if (fs.existsSync(ESBUILD_META_PATH)) {
+      const meta = JSON.parse(fs.readFileSync(ESBUILD_META_PATH, 'utf8'));
+      const outputKey = Object.keys(meta.outputs).find(key => meta.outputs[key].entryPoint === 'public/app.js');
+      if (outputKey) {
+        // Get the filename relative to the public dir
+        jsFilename = path.relative(PUBLIC_DIR, path.join(__dirname, '../', outputKey)).replace(/\\/g, '/');
+        console.log(`  Found JS asset: ${jsFilename}`);
+      } else {
+        console.warn('  Warning: Could not find JS entry point in esbuild-meta.json');
+      }
+    } else {
+      console.warn(`  Warning: ${ESBUILD_META_PATH} not found. Using default JS filename.`);
+    }
+  } catch (e) {
+    console.error('  Error reading JS metafile:', e);
+  }
+
+  try {
+    if (fs.existsSync(CSS_MANIFEST_PATH)) {
+      cssFilename = fs.readFileSync(CSS_MANIFEST_PATH, 'utf8').trim();
+       console.log(`  Found CSS asset: ${cssFilename}`);
+    } else {
+       console.warn(`  Warning: ${CSS_MANIFEST_PATH} not found. Using default CSS filename.`);
+    }
+  } catch (e) {
+    console.error('  Error reading CSS manifest:', e);
+  }
+
+  // 3. Process and inject into index.html
+  console.log(`Processing ${HTML_TEMPLATE_PATH}...`);
+  try {
+    const htmlTemplate = fs.readFileSync(HTML_TEMPLATE_PATH, 'utf8');
+    const injectedHtml = htmlTemplate
+      .replace('<!-- CSS_FILENAME -->', `<link rel="stylesheet" href="/${cssFilename}">`)
+      .replace('<!-- JS_FILENAME -->', `<script src="/${jsFilename}"></script>`);
+      
+    fs.writeFileSync(path.join(DIST_DIR, 'index.html'), injectedHtml);
+    console.log(`  Generated dist/index.html with injected assets.`);
+
+  } catch (e) {
+    console.error('  Error processing index.html:', e);
+    process.exit(1); // Exit if template processing fails
+  }
+  
+  // 4. Copy necessary static assets
+  console.log('Copying static assets...');
+  const assetsToCopy = [
+    // Hashed files (relative to PUBLIC_DIR)
+    jsFilename,
+    cssFilename,
+    // Other essential files
+    'help.html',
+    'manifest.json',
+    // Icons (add any other icons you have)
+    'icon-192.png',
+    // 'icon-512.png',
+    // 'icon.svg',
+    // 'apple-touch-icon.png',
+    // 'apple-touch-icon-precomposed.png'
+  ];
+
+  assetsToCopy.forEach(file => {
+    const sourcePath = path.join(PUBLIC_DIR, file);
+    const destPath = path.join(DIST_DIR, file);
+    if (fs.existsSync(sourcePath)) {
+      try {
+        ensureDirExists(destPath); // Ensure destination directory exists
+        fs.copyFileSync(sourcePath, destPath);
+        console.log(`  Copied: ${file}`);
+      } catch (copyError) {
+        console.error(`  Error copying ${file}:`, copyError);
+      }
+    } else {
+      console.warn(`  Warning: Asset not found, skipping copy: ${sourcePath}`);
     }
   });
+
+  // 5. Copy images directory
+  const imagesSourceDir = path.join(PUBLIC_DIR, 'images');
+  const imagesDestDir = path.join(DIST_DIR, 'images');
+  if (fs.existsSync(imagesSourceDir)) {
+    try {
+      fs.cpSync(imagesSourceDir, imagesDestDir, { recursive: true });
+      console.log(`  Copied: images/ directory`);
+    } catch (copyError) {
+      console.error(`  Error copying images directory:`, copyError);
+    }
+  } else {
+    console.warn(`  Warning: images directory not found, skipping: ${imagesSourceDir}`);
+  }
+
+  console.log('\nStatic site generation complete in dist/ directory.');
 }
 
-// Create themes.js with the list of available themes
-const themesJs = `window.AVAILABLE_THEMES = ${JSON.stringify(Array.from(availableThemes))};`;
-fs.writeFileSync('dist/themes.js', themesJs);
-
-// Generate index.html
-const indexHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Daily Bible verses with beautiful backgrounds">
-  <title>Daily Verse</title>
-  <link rel="stylesheet" href="styles.min.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4a5568">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-192.png">
-
-  <style>
-    .verse-card {
-      position: relative !important;
-      z-index: 5 !important;
-    }
-  </style>
-
-  <!-- Prevent PWA installation prompts -->
-  <meta name="mobile-web-app-capable" content="no">
-  <meta name="apple-mobile-web-app-capable" content="no">
-</head>
-<body>
-  <div class="background-layer" id="bg-layer-1"></div>
-  <div class="background-layer" id="bg-layer-2"></div>
-  <div class="background-overlay"></div>
-  <div class="app-container">
-    <header>
-      <button id="themeToggle" aria-label="Toggle dark mode">
-        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-        </svg>
-        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      </button>
-      <button id="shareBtn" aria-label="Share verse" class="share-button">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4m0 0L8 6m4-4v13" />
-        </svg>
-      </button>
-      <a href="help.html" class="help-button" aria-label="Help">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M12 3a9 9 0 110 18 9 9 0 010-18z" />
-        </svg>
-      </a>
-    </header>
-    <main>
-      <div class="verse-card" id="verseCard">
-        <p class="verse-theme">LOADING...</p>
-        <p class="verse-text" id="verse-text">Loading verse...</p>
-        <p class="verse-reference" id="verse-reference"></p>
-        <button class="button" type="button" id="newVerseBtn">New Verse</button>
-      </div>
-    </main>
-  </div>
-  
-  <script>
-    // Prevent service worker registration
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => registration.unregister());
-      });
-    }
-  </script>
-  <script src="themes.js"></script>
-  <script src="verses.js"></script>
-  <script src="app.min.js"></script>
-  
-  <noscript>
-    <style>
-      .verse-card { opacity: 1 !important; }
-      .button { display: none; }
-    </style>
-    <div class="app-container">
-      <main>
-        <div class="verse-card">
-          <p class="verse-theme">THEME UNAVAILABLE</p>
-          <p>Please enable JavaScript to view daily verses.</p>
-        </div>
-      </main>
-    </div>
-  </noscript>
-</body>
-</html>`;
-
-fs.writeFileSync('dist/index.html', indexHtml);
-
-console.log('Static site generated in dist/ directory'); 
+// --- Run Script ---
+generateStaticSite(); 

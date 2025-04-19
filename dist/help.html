@@ -4,41 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Verse - Help</title>
-    <link rel="stylesheet" href="styles.min.css">
+    <link rel="stylesheet" href="styles.css">
     <style>
-        /* Force theme variables */
-        :root {
-            color-scheme: light dark;
-            --theme-color: #4a5568;
-            --theme-overlay: rgba(74, 85, 104, 0.1);
-            --text-color: #2d3748;
-            --background-color: #ffffff;
-            --card-background: rgba(255, 255, 255, 0.7);
-            --border-color: #eaeaea;
-            --button-background: #4a5568;
-            --button-text: #ffffff;
-            --button-hover: #2d3748;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --border-radius-lg: 16px;
-        }
-
-        [data-theme="dark"] {
-            --theme-color: #1a1a1a;
-            --theme-overlay: rgba(0, 0, 0, 0.4);
-            --text-color: #e2e8f0;
-            --background-color: #1a202c;
-            --card-background: rgba(0, 0, 0, 0.75);
-            --border-color: #2a2a2a;
-            --button-background: #4a5568;
-            --button-text: #ffffff;
-            --button-hover: #2d3748;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-
+        /* REMOVED Inline theme overrides, rely on styles.css + JS */
+        
         .help-container {
             max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 40px auto; /* Add top/bottom margin */
+            padding: var(--spacing-lg) var(--spacing-xl); /* Use variables */
             font-family: system-ui, -apple-system, sans-serif;
             position: relative;
             z-index: 4;
@@ -47,6 +20,7 @@
             box-shadow: var(--box-shadow);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
         }
 
         .help-section {
@@ -66,6 +40,7 @@
             display: grid;
             grid-template-columns: auto 1fr;
             gap: 12px;
+            align-items: center; /* Vertically align kbd and text */
             margin-bottom: 24px;
             color: var(--text-color);
         }
@@ -73,15 +48,32 @@
         .shortcut-grid > div {
             color: var(--text-color);
         }
-
-        .shortcut-key {
+        
+        /* Styles for KBD element */
+        kbd {
             font-family: monospace;
-            background: var(--button-background);
+            font-size: 0.9em;
+            background-color: var(--kbd-bg, #f7fafc); /* Default light kbd bg */
+            color: var(--kbd-color, #2d3748); /* Default light kbd text */
             padding: 4px 8px;
             border-radius: 4px;
-            color: var(--button-text);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--kbd-border, #d1d5db); /* Default light kbd border */
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
             font-weight: 500;
+            white-space: nowrap;
+            /* Center text */
+            display: inline-flex; 
+            align-items: center;
+            justify-content: center;
+            text-align: center; 
+            min-width: 1.5em; /* Ensure minimum width for single chars */
+        }
+        
+        /* Dark mode KBD override */
+        [data-theme="dark"] kbd {
+            --kbd-bg: #4a5568; /* Darker background */
+            --kbd-color: #e2e8f0; /* Lighter text */
+            --kbd-border: #718096; /* Visible border */
         }
 
         .platform-instructions {
@@ -137,6 +129,7 @@
 
         .help-section ul {
             padding-left: 24px;
+            list-style: disc; /* Add standard bullets */
         }
 
         .help-section ul li {
@@ -145,35 +138,9 @@
         }
 
         .app-container {
-            position: relative;
-            z-index: 4;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             padding: 20px;
-            background-color: var(--background-color);
         }
-
-        .background-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--theme-overlay);
-            z-index: 3;
-        }
-
-        .background-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-size: cover;
-            background-position: center;
-            opacity: 0.5;
-        }
+        
     </style>
     <script>
         function setTheme(theme) {
@@ -200,35 +167,49 @@
     </script>
 </head>
 <body>
-    <div class="background-layer" id="bg-layer-1"></div>
-    <div class="background-layer" id="bg-layer-2"></div>
-    <div class="background-overlay"></div>
+    <!-- Background layers can be added by JS if needed, or rely on styles.css -->
+    <!-- <div class="background-layer" id="bg-layer-1"></div> -->
+    <!-- <div class="background-layer" id="bg-layer-2"></div> -->
+    <!-- <div class="background-overlay"></div> -->
     <div class="app-container">
         <div class="help-container">
             <a href="/" class="back-button">← Back to Verses</a>
             
             <div class="help-section">
+                <h2>Features</h2>
+                <ul>
+                    <li>New inspirational Bible verse daily</li>
+                    <li>Beautiful background images matching verse themes</li>
+                    <li>Light & Dark mode support (use <kbd>T</kbd> or toggle)</li>
+                    <li>Keyboard shortcuts for easy navigation (see below)</li>
+                    <li>Share verses with others (use <kbd>S</kbd> or button)</li>
+                    <li>Installable for an app-like experience (see below)</li>
+                </ul>
+            </div>
+
+            <div class="help-section">
                 <h2>Keyboard Shortcuts</h2>
                 <div class="shortcut-grid">
-                    <div class="shortcut-key">Space</div>
+                    <kbd>Space</kbd>
                     <div>Get a new verse</div>
                     
-                    <div class="shortcut-key">T</div>
+                    <kbd>T</kbd>
                     <div>Toggle dark/light theme</div>
                     
-                    <div class="shortcut-key">S</div>
-                    <div>Share current verse</div>
+                    <kbd>S</kbd>
+                    <div>Share current verse (uses native share if available, otherwise copies to clipboard)</div>
                     
-                    <div class="shortcut-key">? or H</div>
+                    <kbd>?</kbd> or <kbd>H</kbd>
                     <div>Show this help page</div>
                     
-                    <div class="shortcut-key">Esc</div>
-                    <div>Return to verses</div>
+                    <kbd>Esc</kbd>
+                    <div>Return to verses page</div>
                 </div>
             </div>
 
             <div class="help-section">
-                <h2>Add to Home Screen</h2>
+                <h2>Installation (Offline Access)</h2>
+                <p>Add Daily Verse to your Home Screen for quick access and an app-like experience, even when offline.</p>
                 
                 <div class="platform-instructions">
                     <h3>iPhone / iPad (Safari)</h3>
@@ -251,16 +232,6 @@
                 </div>
             </div>
 
-            <div class="help-section">
-                <h2>Features</h2>
-                <ul>
-                    <li>Beautiful backgrounds that change with each verse theme</li>
-                    <li>Dark and light mode support</li>
-                    <li>Works offline once installed</li>
-                    <li>Share verses with friends</li>
-                    <li>Themed verses for different topics (love, guidance, strength, etc.)</li>
-                </ul>
-            </div>
         </div>
     </div>
     <script>
