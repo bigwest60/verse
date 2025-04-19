@@ -19,6 +19,9 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const VERSES_PATH = path.join(__dirname, '../public/verses.json');
 const DEBUG = process.env.DEBUG || !IS_PROD;
+const HTML_PATH = path.join(__dirname, '../public/index.html');
+const ESBUILD_META_PATH = path.join(__dirname, '../esbuild-meta.json');
+const CSS_MANIFEST_PATH = path.join(__dirname, '../scripts/.css-manifest.txt');
 
 // Debug info
 if (DEBUG) {
@@ -48,8 +51,8 @@ if (DEBUG) {
 // Cache control middleware for production
 if (IS_PROD) {
   app.use((req, res, next) => {
-    // Skip caching for HTML files
-    if (req.path.endsWith('.html')) {
+    // Skip caching for HTML files AND the root path
+    if (req.path.endsWith('.html') || req.path === '/') {
       res.set('Cache-Control', 'no-cache');
       return next();
     }
@@ -205,9 +208,62 @@ async function loadVerses() {
   }
 }
 
+// Helper to read manifest files - caching result in production
+let assetPaths = null;
+function getAssetPaths() {
+  if (assetPaths && IS_PROD) {
+    return assetPaths;
+  }
+  
+  let jsFilename = '/app.js'; // Default for dev
+  let cssFilename = '/styles.css'; // Default for dev
+
+  if (IS_PROD) {
+    try {
+      // Read JS filename from esbuild meta
+      if (fs.existsSync(ESBUILD_META_PATH)) {
+        const meta = JSON.parse(fs.readFileSync(ESBUILD_META_PATH, 'utf8'));
+        // Find the output file corresponding to the entry point
+        const outputKey = Object.keys(meta.outputs).find(key => meta.outputs[key].entryPoint === 'public/app.js');
+        if (outputKey) {
+          jsFilename = `/${path.basename(outputKey)}`;
+        }
+      }
+    } catch (e) { console.error('Error reading JS metafile:', e); }
+
+    try {
+      // Read CSS filename from manifest
+      if (fs.existsSync(CSS_MANIFEST_PATH)) {
+        cssFilename = `/${fs.readFileSync(CSS_MANIFEST_PATH, 'utf8').trim()}`;
+      }
+    } catch (e) { console.error('Error reading CSS manifest:', e); }
+  }
+  
+  assetPaths = { js: jsFilename, css: cssFilename };
+  return assetPaths;
+}
+
 // Routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+  if (IS_PROD) {
+    try {
+      const htmlTemplate = fs.readFileSync(HTML_PATH, 'utf8');
+      const assets = getAssetPaths();
+      const injectedHtml = htmlTemplate
+        .replace('<!-- CSS_FILENAME -->', `<link rel="stylesheet" href="${assets.css}">`)
+        .replace('<!-- JS_FILENAME -->', `<script src="${assets.js}"></script>`);
+      
+      // Set appropriate headers for HTML in prod (no-cache already handled by middleware)
+      res.set('Content-Type', 'text/html');
+      res.send(injectedHtml);
+    } catch (e) {
+      console.error('Error serving modified index.html:', e);
+      res.status(500).send('Server error serving HTML');
+    }
+  } else {
+    // Development: serve the original index.html
+    res.sendFile(HTML_PATH);
+  }
 });
 
 // API routes

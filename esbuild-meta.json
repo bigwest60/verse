@@ -1,0 +1,22 @@
+{
+  "inputs": {
+    "public/app.js": {
+      "bytes": 12567,
+      "imports": [],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "public/app-647CZ6IP.js": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": "public/app.js",
+      "inputs": {
+        "public/app.js": {
+          "bytesInOutput": 4912
+        }
+      },
+      "bytes": 4913
+    }
+  }
+}
