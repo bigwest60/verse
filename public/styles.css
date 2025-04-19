@@ -4,12 +4,11 @@
   --theme-color: #4a5568;
   --theme-overlay: rgba(255, 255, 255, 0.1);
   --text-color: #2d3748;
-  --text-muted: #666;
+  --text-muted: #777;
   --background-color: #f0f2f5;
   --card-background: #ffffff;
   --shadow-color: rgba(0, 0, 0, 0.1);
   --border-color: rgba(0, 0, 0, 0.1);
-  --theme-text-color: rgba(45, 55, 72, 0.95);
   --button-background: #4a5568;
   --button-hover: #2d3748;
   --button-active: #1a202c;
@@ -45,7 +44,6 @@
   --card-background: rgba(26, 32, 44, 0.95);
   --shadow-color: rgba(0, 0, 0, 0.3);
   --border-color: rgba(255, 255, 255, 0.1);
-  --theme-text-color: rgba(226, 232, 240, 0.95);
   --button-background: #4a5568;
   --button-hover: #2d3748;
   --button-active: #1a202c;
@@ -172,21 +170,29 @@ main {
 }
 
 .verse-theme {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  color: var(--theme-text-color) !important;
-  padding: 8px !important;
-  text-align: center !important;
-  font-size: 16px !important;
-  margin: 0 0 20px 0 !important;
-  font-weight: 600 !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  text-transform: uppercase !important;
-  letter-spacing: 2px !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  display: block;
+  visibility: visible;
+  opacity: 1;
+  padding: 8px;
+  text-align: center;
+  font-size: 16px;
+  margin: 0 0 20px 0;
+  font-weight: 600;
+  width: 100%;
+  box-sizing: border-box;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Explicit theme text colors */
+[data-theme="light"] .verse-theme {
+  color: var(--text-muted); /* Use muted text color */
+}
+
+[data-theme="dark"] .verse-theme {
+  color: var(--text-muted); /* Use muted text color */
 }
 
 .verse-text {
