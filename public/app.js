@@ -313,6 +313,10 @@ async function shareVerse() {
     
     const shareText = `${currentVerse.text}\n\n— ${currentVerse.reference}`;
     
+    // Restore original code
+    // fallbackShare(shareText);
+    
+    // Original code:
     if (navigator.share) {
         try {
             await navigator.share({
@@ -327,6 +331,7 @@ async function shareVerse() {
     } else {
         fallbackShare(shareText);
     }
+    // End of original code
 }
 
 function fallbackShare(text) {
@@ -341,9 +346,9 @@ function fallbackShare(text) {
     
     try {
         document.execCommand('copy');
-        alert('Verse copied to clipboard!');
+        showToast('Verse copied to clipboard!', 'success');
     } catch (error) {
-        alert('Could not copy verse. Please try again.');
+        showToast('Could not copy verse.', 'error');
     }
     
     document.body.removeChild(textarea);
