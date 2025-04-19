@@ -159,8 +159,22 @@ async function fetchVerse() {
   verseReference.classList.add('fade-out');
   
   try {
-    // Get random verse from local data
-    const verse = window.VERSES[Math.floor(Math.random() * window.VERSES.length)];
+    // Fetch verses from JSON file
+    const response = await fetch('/verses.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json(); // Parse the entire JSON object
+    
+    // Check if the nested 'verses' property is a non-empty array
+    if (!data || !Array.isArray(data.verses) || data.verses.length === 0) {
+       throw new Error('Invalid or empty verses data received in verses.json');
+    }
+    
+    const versesArray = data.verses; // Get the actual array
+    
+    // Get random verse from the verses array
+    const verse = versesArray[Math.floor(Math.random() * versesArray.length)];
     
     // Update current verse for sharing
     currentVerse = verse;
@@ -192,6 +206,7 @@ async function fetchVerse() {
     }, config.fadeDelay);
     
   } catch (error) {
+    console.error('Error fetching or processing verse:', error); // Log the error
     setTimeout(() => {
       if (verseText) {
         verseText.textContent = 'Error loading verse. Please try again.';
@@ -335,9 +350,6 @@ function init() {
       setThemeText(currentTheme);
     }
   });
-  
-  // Add tabindex to theme toggle to prevent focus
-  themeToggle.setAttribute('tabindex', '-1');
   
   // Handle spacebar press
   document.addEventListener('keydown', (e) => {

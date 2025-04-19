@@ -4,7 +4,7 @@
   --theme-color: #4a5568;
   --theme-overlay: rgba(255, 255, 255, 0.1);
   --text-color: #2d3748;
-  --text-muted: #777;
+  --text-muted: #6a737d;
   --background-color: #f0f2f5;
   --card-background: #ffffff;
   --shadow-color: rgba(0, 0, 0, 0.1);
@@ -15,6 +15,10 @@
   --button-text: #ffffff;
   --icon-color: #000000;
   --transition-duration: 0.3s;
+  
+  /* Focus */
+  --primary-focus-light: #005fcc; /* Bright blue for light mode focus */
+  --focus-outline-color: var(--primary-focus-light);
   
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -39,7 +43,7 @@
   --theme-color: #1a1a1a;
   --theme-overlay: rgba(0, 0, 0, 0.4);
   --text-color: #e2e8f0;
-  --text-muted: #a0a0a0;
+  --text-muted: #a8b3c1;
   --background-color: #1a202c;
   --card-background: rgba(26, 32, 44, 0.95);
   --shadow-color: rgba(0, 0, 0, 0.3);
@@ -50,6 +54,10 @@
   --button-text: #ffffff;
   --icon-color: #ffffff;
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  
+  /* Focus */
+  --primary-focus-dark: #4da6ff; /* Lighter blue for dark mode focus */
+  --focus-outline-color: var(--primary-focus-dark);
 }
 
 /* Base styles */
@@ -291,6 +299,8 @@ header .help-button {
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
+  /* Add subtle background on focus */
+  transition: background-color 0.1s ease-out, opacity 0.2s ease;
 }
 
 /* SVG styles for light mode (default) */
@@ -410,9 +420,25 @@ header .help-button:hover {
 }
 
 /* Keyboard focus styles */
+/* Apply consistent focus outline to all focusable elements */
 :focus-visible {
-  outline: 3px solid var(--primary-focus);
+  outline: 2px solid var(--focus-outline-color);
   outline-offset: 2px;
+  /* Ensure rounded corners on buttons/cards don't hide outline */
+  box-shadow: 0 0 0 2px var(--background-color), 0 0 0 4px var(--focus-outline-color);
+  /* Remove default focus ring only when :focus-visible is supported */
+  outline: none;
+}
+
+/* Specific adjustments if needed */
+.button:focus-visible {
+  /* Add extra offset for button border-radius */
+   outline-offset: 4px;
+}
+
+header button:focus-visible, 
+header a:focus-visible {
+   border-radius: var(--border-radius-sm); /* Ensure outline follows button shape */
 }
 
 /* Loading animation */
