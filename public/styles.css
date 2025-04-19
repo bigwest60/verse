@@ -13,7 +13,6 @@
   --button-hover: #2d3748;
   --button-active: #1a202c;
   --button-text: #ffffff;
-  --icon-color: #000000;
   --transition-duration: 0.3s;
   
   /* Focus */
@@ -52,7 +51,6 @@
   --button-hover: #2d3748;
   --button-active: #1a202c;
   --button-text: #ffffff;
-  --icon-color: #ffffff;
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   
   /* Focus */
@@ -222,12 +220,6 @@ main {
   font-weight: 500;
 }
 
-.verse-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
 /* Button styles */
 .button {
   display: inline-block;
@@ -295,11 +287,6 @@ main {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-/* Background transition */
-.background-transition {
-  display: none;
 }
 
 /* Header styles */
@@ -407,27 +394,6 @@ header .help-button:hover {
 
 [data-theme="dark"] #themeToggle .moon-icon {
   display: none;
-}
-
-/* Main content styles */
-.app {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  position: relative;
-  min-height: 100vh;
-  background-size: cover;
-  background-position: center;
-  transition: background-image var(--transition-duration) ease-out;
-}
-
-#verse-theme {
-  transition: all 0.3s ease-out;
-  transform-origin: center;
-  will-change: opacity, transform;
 }
 
 #verse-theme.fade-out {
