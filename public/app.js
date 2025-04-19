@@ -30,6 +30,45 @@ const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 const theme = localStorage.getItem('theme') || (prefersDark.matches ? 'dark' : 'light');
 document.documentElement.setAttribute('data-theme', theme);
 
+// Define available image sizes (must match optimize-images.js)
+const IMAGE_SIZES = [480, 768, 1080, 1920];
+
+/**
+ * Check browser support for WebP format.
+ * @returns {Promise<boolean>} Promise resolving to true if WebP is supported, false otherwise.
+ */
+const supportsWebP = (() => {
+  let memoizedResult = null;
+  return async () => {
+    if (memoizedResult !== null) {
+      return memoizedResult;
+    }
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        memoizedResult = (img.width > 0 && img.height > 0);
+        resolve(memoizedResult);
+      };
+      img.onerror = () => {
+        memoizedResult = false;
+        resolve(memoizedResult);
+      };
+      // A small, representative WebP image data URL
+      img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==';
+    });
+  };
+})();
+
+/**
+ * Get the best image size suffix based on screen width.
+ * @returns {number} The optimal image width suffix (e.g., 480, 768, 1080, 1920).
+ */
+function getOptimalImageSize() {
+  const screenWidth = window.innerWidth;
+  // Find the smallest size that's >= screen width, or use the largest size
+  return IMAGE_SIZES.find(size => size >= screenWidth) || IMAGE_SIZES[IMAGE_SIZES.length - 1];
+}
+
 /**
  * Preload an image and cache it
  * @param {string} src Image source URL
@@ -72,7 +111,11 @@ async function setThemeText(theme) {
   // Set background image based on theme
   if (theme && theme !== '') {
     const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-    const imagePath = `/images/bg-${theme.toLowerCase()}${isDarkMode ? '-dark' : ''}.jpg`;
+    const themeSlug = theme.toLowerCase();
+    const optimalSize = getOptimalImageSize();
+    const useWebP = await supportsWebP();
+    const extension = useWebP ? 'webp' : 'jpg';
+    const imagePath = `/images/bg-${themeSlug}${isDarkMode ? '-dark' : ''}-${optimalSize}.${extension}`;
 
     // Don't transition to the same image
     if (currentBackgroundImage === imagePath) return;
@@ -83,7 +126,7 @@ async function setThemeText(theme) {
     isLoadingBackground = true;
 
     try {
-      // Preload the image before starting transition
+      // Preload the CHOSEN sized image before starting transition
       await preloadImage(imagePath);
       
       // Get the next background layer
@@ -120,6 +163,18 @@ async function setThemeText(theme) {
       // Clean up old layer
       currentLayer.style.backgroundImage = 'none';
       
+      // If we have a current background, keep it (ensure it uses the correct path format too)
+      if (currentBackgroundImage) {
+        try {
+          if (currentLayer && !currentLayer.style.backgroundImage.includes(currentBackgroundImage)) {
+            await preloadImage(currentBackgroundImage);
+            currentLayer.style.backgroundImage = `url("${currentBackgroundImage}")`;
+            currentLayer.classList.add('active');
+          }
+        } catch (e) {
+          // Silently fail if restore fails
+        }
+      }
     } catch (error) {
       // If we have a current background, keep it
       if (currentBackgroundImage) {

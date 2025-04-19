@@ -51,9 +51,10 @@ async function optimizeAllImages() {
     }
 
     const files = fs.readdirSync(IMAGES_DIR);
-    const imageFiles = files.filter(file => file.endsWith('.jpg') && !file.includes('-'));
+    // Adjusted filter: Find .jpg files that are NOT already sized (e.g., ending in -###.jpg)
+    const imageFiles = files.filter(file => file.endsWith('.jpg') && !/-\d+\.jpg$/.test(file));
 
-    console.log(`Found ${imageFiles.length} images to optimize...`);
+    console.log(`Found ${imageFiles.length} base images to optimize...`);
 
     for (const file of imageFiles) {
       const inputPath = path.join(IMAGES_DIR, file);
