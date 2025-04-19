@@ -93,6 +93,7 @@ function generateStaticSite() {
     // Other essential files
     'help.html',
     'manifest.json',
+    'verses.json',
     // Icons (add any other icons you have)
     'icon-192.png',
     // 'icon-512.png',
