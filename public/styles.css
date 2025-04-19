@@ -160,19 +160,10 @@ main {
   border: 1px solid var(--border-color);
 }
 
-/* Remove this override as it's no longer needed */
-[data-theme="light"] .verse-card {
-  background: var(--card-background);
-}
-
-/* Update dark mode override to use data-theme */
-[data-theme="dark"] .verse-card {
-  background: var(--card-background);
-}
-
 .verse-card.loading {
   opacity: 0.7;
   transform: scale(0.98);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .verse-theme {
@@ -190,15 +181,6 @@ main {
   letter-spacing: 2px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* Explicit theme text colors */
-[data-theme="light"] .verse-theme {
-  color: var(--text-muted); /* Use muted text color */
-}
-
-[data-theme="dark"] .verse-theme {
-  color: var(--text-muted); /* Use muted text color */
 }
 
 .verse-text {
