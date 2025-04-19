@@ -522,4 +522,45 @@ header a:focus-visible {
   footer {
     display: none;
   }
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  max-width: 80vw; /* Prevent overly wide toasts on large screens */
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Optional: Add different types */
+.toast.success {
+  background-color: rgba(40, 167, 69, 0.9); /* Greenish */
+}
+
+.toast.error {
+  background-color: rgba(220, 53, 69, 0.9); /* Reddish */
 } 

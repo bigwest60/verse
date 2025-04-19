@@ -432,4 +432,53 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
+}
+
+/**
+ * Displays a toast notification.
+ * @param {string} message The message to display.
+ * @param {string} type Optional type ('success', 'error', etc.) for styling.
+ * @param {number} duration How long the toast stays visible (in ms).
+ */
+function showToast(message, type = '', duration = 3000) {
+  let container = document.getElementById('toast-container');
+  
+  // Create container if it doesn't exist
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+  
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  if (type) {
+    toast.classList.add(type);
+  }
+  toast.textContent = message;
+  
+  // Add to container
+  container.appendChild(toast);
+  
+  // Trigger reflow to enable animation
+  void toast.offsetWidth;
+  
+  // Add 'show' class to animate in
+  toast.classList.add('show');
+  
+  // Set timeout to remove the toast
+  setTimeout(() => {
+    toast.classList.remove('show');
+    // Remove element after transition finishes
+    toast.addEventListener('transitionend', () => {
+      if (toast.parentNode === container) { // Check if it hasn't been removed already
+        container.removeChild(toast);
+        // Optional: Remove container if it's empty
+        if (container.children.length === 0) {
+           document.body.removeChild(container);
+        }
+      }
+    });
+  }, duration);
 } 
