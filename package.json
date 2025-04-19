@@ -19,7 +19,8 @@
     "setup": "node src/download-images.js && npm run optimize:images",
     "prepare": "npm run setup",
     "static": "node scripts/generate-static.js",
-    "serve:static": "npx serve dist"
+    "serve:static": "npx serve dist",
+    "knip": "knip"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -31,24 +32,41 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^5.1.0",
-    "figlet": "^1.7.0",
-    "gradient-string": "^2.0.2",
-    "openai": "^4.86.1",
-    "ora": "^7.0.1",
-    "pdf-parse": "^1.1.1",
-    "sharp": "^0.33.2",
     "fastmcp": "^1.20.5",
+    "figlet": "^1.7.0",
     "fuse.js": "^7.0.0",
+    "gradient-string": "^2.0.2",
     "helmet": "^8.1.0",
     "inquirer": "^12.5.0",
     "jsonwebtoken": "^9.0.2",
-    "lru-cache": "^10.2.0"
+    "lru-cache": "^10.2.0",
+    "openai": "^4.86.1",
+    "ora": "^7.0.1",
+    "pdf-parse": "^1.1.1",
+    "sharp": "^0.33.2"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "cssnano": "^7.0.6",
     "esbuild": "^0.20.2",
+    "knip": "^5.50.5",
     "postcss": "^8.5.3",
     "postcss-cli": "^11.0.1"
+  },
+  "knip": {
+    "entry": [
+      "src/index.js!",
+      "public/app.js!",
+      "scripts/**/*.js!"
+    ],
+    "project": [
+      "src/**/*.js",
+      "public/**/*.js",
+      "scripts/**/*.js"
+    ],
+    "ignore": [
+      "node_modules",
+      "dist"
+    ]
   }
 }
