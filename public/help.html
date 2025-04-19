@@ -61,7 +61,12 @@
             box-shadow: 0 1px 1px rgba(0,0,0,0.1);
             font-weight: 500;
             white-space: nowrap;
-            display: inline-block; /* Ensure padding/border work */
+            /* Center text */
+            display: inline-flex; 
+            align-items: center;
+            justify-content: center;
+            text-align: center; 
+            min-width: 1.5em; /* Ensure minimum width for single chars */
         }
         
         /* Dark mode KBD override */
@@ -124,6 +129,7 @@
 
         .help-section ul {
             padding-left: 24px;
+            list-style: disc; /* Add standard bullets */
         }
 
         .help-section ul li {
@@ -132,15 +138,9 @@
         }
 
         .app-container {
-            /* Removed duplicated styles already in styles.css */
             padding: 20px;
         }
         
-        /* Remove redundant background styles if styles.css is used */
-        /*
-        .background-overlay { ... }
-        .background-layer { ... }
-        */
     </style>
     <script>
         function setTheme(theme) {
@@ -176,6 +176,18 @@
             <a href="/" class="back-button">← Back to Verses</a>
             
             <div class="help-section">
+                <h2>Features</h2>
+                <ul>
+                    <li>New inspirational Bible verse daily</li>
+                    <li>Beautiful background images matching verse themes</li>
+                    <li>Light & Dark mode support (use <kbd>T</kbd> or toggle)</li>
+                    <li>Keyboard shortcuts for easy navigation (see below)</li>
+                    <li>Share verses with others (use <kbd>S</kbd> or button)</li>
+                    <li>Installable for an app-like experience (see below)</li>
+                </ul>
+            </div>
+
+            <div class="help-section">
                 <h2>Keyboard Shortcuts</h2>
                 <div class="shortcut-grid">
                     <kbd>Space</kbd>
@@ -185,18 +197,19 @@
                     <div>Toggle dark/light theme</div>
                     
                     <kbd>S</kbd>
-                    <div>Share current verse</div>
+                    <div>Share current verse (uses native share if available, otherwise copies to clipboard)</div>
                     
                     <kbd>?</kbd> or <kbd>H</kbd>
                     <div>Show this help page</div>
                     
                     <kbd>Esc</kbd>
-                    <div>Return to verses</div>
+                    <div>Return to verses page</div>
                 </div>
             </div>
 
             <div class="help-section">
-                <h2>Add to Home Screen</h2>
+                <h2>Installation (Offline Access)</h2>
+                <p>Add Daily Verse to your Home Screen for quick access and an app-like experience, even when offline.</p>
                 
                 <div class="platform-instructions">
                     <h3>iPhone / iPad (Safari)</h3>
@@ -219,16 +232,6 @@
                 </div>
             </div>
 
-            <div class="help-section">
-                <h2>Features</h2>
-                <ul>
-                    <li>Beautiful backgrounds that change with each verse theme</li>
-                    <li>Dark and light mode support</li>
-                    <li>Works offline once installed</li>
-                    <li>Share verses with friends</li>
-                    <li>Themed verses for different topics (love, guidance, strength, etc.)</li>
-                </ul>
-            </div>
         </div>
     </div>
     <script>
