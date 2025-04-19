@@ -20,6 +20,7 @@ const __dirname = path.dirname(__filename);
 const PUBLIC_DIR = path.join(__dirname, '../public');
 const DIST_DIR = path.join(__dirname, '../dist');
 const HTML_TEMPLATE_PATH = path.join(PUBLIC_DIR, 'index.html');
+const HELP_HTML_TEMPLATE_PATH = path.join(PUBLIC_DIR, 'help.html');
 const ESBUILD_META_PATH = path.join(__dirname, '../esbuild-meta.json');
 const CSS_MANIFEST_PATH = path.join(__dirname, '.css-manifest.txt');
 
@@ -71,17 +72,31 @@ function generateStaticSite() {
   // 3. Process and inject into index.html
   console.log(`Processing ${HTML_TEMPLATE_PATH}...`);
   try {
-    const htmlTemplate = fs.readFileSync(HTML_TEMPLATE_PATH, 'utf8');
-    const injectedHtml = htmlTemplate
+    const indexHtmlTemplate = fs.readFileSync(HTML_TEMPLATE_PATH, 'utf8');
+    const injectedIndexHtml = indexHtmlTemplate
       .replace('<!-- CSS_FILENAME -->', `<link rel="stylesheet" href="/${cssFilename}">`)
       .replace('<!-- JS_FILENAME -->', `<script src="/${jsFilename}"></script>`);
-      
-    fs.writeFileSync(path.join(DIST_DIR, 'index.html'), injectedHtml);
+    fs.writeFileSync(path.join(DIST_DIR, 'index.html'), injectedIndexHtml);
     console.log(`  Generated dist/index.html with injected assets.`);
-
   } catch (e) {
     console.error('  Error processing index.html:', e);
     process.exit(1); // Exit if template processing fails
+  }
+
+  // 3b. Process and inject into help.html
+  console.log(`Processing ${HELP_HTML_TEMPLATE_PATH}...`);
+  try {
+    const helpHtmlTemplate = fs.readFileSync(HELP_HTML_TEMPLATE_PATH, 'utf8');
+    // Replace the specific link tag
+    const injectedHelpHtml = helpHtmlTemplate
+      .replace('<link rel="stylesheet" href="styles.css">', `<link rel="stylesheet" href="/${cssFilename}">`);
+      
+    fs.writeFileSync(path.join(DIST_DIR, 'help.html'), injectedHelpHtml);
+    console.log(`  Generated dist/help.html with injected CSS asset.`);
+
+  } catch (e) {
+    console.error('  Error processing help.html:', e);
+    // Don't necessarily exit, maybe just warn?
   }
   
   // 4. Copy necessary static assets
@@ -90,8 +105,8 @@ function generateStaticSite() {
     // Hashed files (relative to PUBLIC_DIR)
     jsFilename,
     cssFilename,
-    // Other essential files
-    'help.html',
+    // Other essential files (help.html is now generated, not copied)
+    // 'help.html', 
     'manifest.json',
     'verses.json',
     // Icons (add any other icons you have)
