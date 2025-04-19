@@ -241,10 +241,11 @@ main {
   text-transform: uppercase;
   letter-spacing: 1px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
   min-width: 120px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative; /* Needed for spinner positioning */
 }
 
 .button:hover {
@@ -260,10 +261,40 @@ main {
 }
 
 .button:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+}
+
+/* Spinner styles */
+.spinner {
+  display: none; /* Hidden by default */
+  width: 1.2em; /* Slightly larger */
+  height: 1.2em;
+  border: 3px solid rgba(255, 255, 255, 0.3); /* Lighter border */
+  border-top-color: currentColor; /* Use button text color for spinning part */
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Loading state for button */
+.button.loading {
+  /* Add flex properties for centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button.loading .spinner {
+  display: inline-block; /* Show spinner */
+}
+
+.button.loading .button-text {
+  display: none; /* Remove text completely */
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Background transition */
@@ -439,22 +470,6 @@ header .help-button:hover {
 header button:focus-visible, 
 header a:focus-visible {
    border-radius: var(--border-radius-sm); /* Ensure outline follows button shape */
-}
-
-/* Loading animation */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading .button::after {
-  content: '';
-  width: 1em;
-  height: 1em;
-  margin-left: 0.5em;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
 }
 
 /* Media Queries */

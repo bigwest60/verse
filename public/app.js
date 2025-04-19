@@ -200,13 +200,15 @@ async function setThemeText(theme) {
  * Fetch and display a new verse
  */
 async function fetchVerse() {
-  if (!verseCard || verseCard.classList.contains('loading')) {
+  if (!verseCard || isLoading) {
     return;
   }
   
+  isLoading = true;
   verseCard.classList.add('loading');
   if (newVerseBtn) {
     newVerseBtn.disabled = true;
+    newVerseBtn.classList.add('loading');
   }
   
   // Add fade-out classes
@@ -253,32 +255,39 @@ async function fetchVerse() {
         verseReference.classList.remove('fade-out');
       }
       
-      // Remove loading state
-      verseCard.classList.remove('loading');
+      // Remove CARD loading state
+      // verseCard.classList.remove('loading'); // Removed this, handled later
+      
+      // RESET BUTTON STATE HERE
       if (newVerseBtn) {
         newVerseBtn.disabled = false;
+        newVerseBtn.classList.remove('loading');
       }
     }, config.fadeDelay);
     
-  } catch (error) {
-    console.error('Error fetching or processing verse:', error); // Log the error
+    // Remove loading class after fade-in and animations
     setTimeout(() => {
-      if (verseText) {
-        verseText.textContent = 'Error loading verse. Please try again.';
-        verseText.classList.remove('fade-out');
+      if (verseCard) {
+        verseCard.classList.remove('loading');
       }
-      if (verseReference) {
-        verseReference.textContent = '';
-        verseReference.classList.remove('fade-out');
-      }
-      setThemeText('');
-      
-      // Remove loading state
+    }, config.fadeDelay + config.transitionDuration);
+    
+  } catch (error) {
+    console.error('Error fetching verse:', error);
+    if (verseText) verseText.textContent = 'Error fetching verse.';
+    if (verseReference) verseReference.textContent = '';
+    setThemeText(''); // Set theme to error state
+  } finally {
+    isLoading = false;
+    // REMOVED button reset from here
+    // if (newVerseBtn) {
+    //   newVerseBtn.disabled = false;
+    //   newVerseBtn.classList.remove('loading'); 
+    // }
+    // Ensure verse card loading state is removed if an error happened early
+    if (verseCard && verseCard.classList.contains('loading')) {
       verseCard.classList.remove('loading');
-      if (newVerseBtn) {
-        newVerseBtn.disabled = false;
-      }
-    }, config.fadeDelay);
+    }
   }
 }
 
