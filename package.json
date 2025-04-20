@@ -4,6 +4,9 @@
   "description": "Display a random bible verse upon page refresh.",
   "author": "Bill",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "node scripts/dev.js",
     "list": "node scripts/dev.js list",
