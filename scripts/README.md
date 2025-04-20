@@ -21,9 +21,11 @@ In an AI-driven development process—particularly with tools like [Cursor](http
 The script can be configured through environment variables in a `.env` file at the root of the project:
 
 ### Required Configuration
+
 - `ANTHROPIC_API_KEY`: Your Anthropic API key for Claude
 
 ### Optional Configuration
+
 - `MODEL`: Specify which Claude model to use (default: "claude-3-7-sonnet-20250219")
 - `MAX_TOKENS`: Maximum tokens for model responses (default: 4000)
 - `TEMPERATURE`: Temperature for model responses (default: 0.7)
@@ -111,6 +113,7 @@ task-master update --file=custom-tasks.json --from=5 --prompt="Change database f
 ```
 
 Notes:
+
 - The `--prompt` parameter is required and should explain the changes or new context
 - Only tasks that aren't marked as 'done' will be updated
 - Tasks with ID >= the specified --from value will be updated
@@ -134,6 +137,7 @@ task-master set-status --id=1,2,3 --status=done
 ```
 
 Notes:
+
 - When marking a parent task as "done", all of its subtasks will automatically be marked as "done" as well
 - Common status values are 'done', 'pending', and 'deferred', but any string is accepted
 - You can specify multiple task IDs by separating them with commas
@@ -183,6 +187,7 @@ task-master clear-subtasks --all
 ```
 
 Notes:
+
 - After clearing subtasks, task files are automatically regenerated
 - This is useful when you want to regenerate subtasks with a different approach
 - Can be combined with the `expand` command to immediately generate new subtasks
@@ -198,6 +203,7 @@ The script integrates with two AI services:
 The Perplexity integration uses the OpenAI client to connect to Perplexity's API, which provides enhanced research capabilities for generating more informed subtasks. If the Perplexity API is unavailable or encounters an error, the script will automatically fall back to using Anthropic's Claude.
 
 To use the Perplexity integration:
+
 1. Obtain a Perplexity API key
 2. Add `PERPLEXITY_API_KEY` to your `.env` file
 3. Optionally specify `PERPLEXITY_MODEL` in your `.env` file (default: "sonar-medium-online")
@@ -206,6 +212,7 @@ To use the Perplexity integration:
 ## Logging
 
 The script supports different logging levels controlled by the `LOG_LEVEL` environment variable:
+
 - `debug`: Detailed information, typically useful for troubleshooting
 - `info`: Confirmation that things are working as expected (default)
 - `warn`: Warning messages that don't prevent execution
@@ -263,6 +270,7 @@ task-master validate-dependencies --file=custom-tasks.json
 ```
 
 This command:
+
 - Scans all tasks and subtasks for non-existent dependencies
 - Identifies potential self-dependencies (tasks referencing themselves)
 - Reports all found issues without modifying files
@@ -284,6 +292,7 @@ task-master fix-dependencies --file=custom-tasks.json
 ```
 
 This command:
+
 1. **Validates all dependencies** across tasks and subtasks
 2. **Automatically removes**:
    - References to non-existent tasks and subtasks
@@ -321,6 +330,7 @@ task-master analyze-complexity --research
 ```
 
 Notes:
+
 - The command uses Claude to analyze each task's complexity (or Perplexity with --research flag)
 - Tasks are scored on a scale of 1-10
 - Each task receives a recommended number of subtasks based on DEFAULT_SUBTASKS configuration
@@ -345,12 +355,14 @@ task-master expand --id=8 --num=5 --prompt="Custom prompt"
 ```
 
 When a complexity report exists:
+
 - The `expand` command will use the recommended subtask count from the report (unless overridden)
 - It will use the tailored expansion prompt from the report (unless a custom prompt is provided)
 - When using `--all`, tasks are sorted by complexity score (highest first)
 - The `--research` flag is preserved from the complexity analysis to expansion
 
 The output report structure is:
+
 ```json
 {
   "meta": {

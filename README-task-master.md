@@ -93,7 +93,7 @@ task-master generate
 
 ## Troubleshooting
 
-### If `task-master init` doesn't respond:
+### If `task-master init` doesn't respond
 
 Try running it with Node directly:
 
