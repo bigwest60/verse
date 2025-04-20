@@ -28,15 +28,15 @@ try {
         console.warn(`Could not parse URL: ${url}. Skipping this entry.`);
         return match; // Return the original block if URL parsing fails
     }
-   
+    
     const htmlFilePath = path.join(publicDir, htmlFileName);
-   
+    
     console.log(` Processing URL: ${url} -> File: ${htmlFilePath}`);
 
     if (fs.existsSync(htmlFilePath)) {
       const stats = fs.statSync(htmlFilePath);
       const lastModDate = stats.mtime.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-     
+      
       if (oldLastmod.trim() !== lastModDate) {
         console.log(`  Updating lastmod for ${htmlFileName}: ${oldLastmod.trim()} -> ${lastModDate}`);
         changesMade = true;

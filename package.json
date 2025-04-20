@@ -18,7 +18,7 @@
     "build:js": "esbuild public/app.js --bundle --minify --format=esm --entry-names=\"[name]-[hash]\" --outdir=public --metafile=esbuild-meta.json",
     "build:css": "postcss public/styles.css | node scripts/hash-css.js",
     "optimize:images": "node scripts/optimize-images.js",
-    "build:sitemap": "node scripts/update-sitemap.js",
+    "build:sitemap": "node scripts/update-sitemap.cjs",
     "start:prod": "NODE_ENV=production node src/index.js",
     "setup": "node src/download-images.js && npm run optimize:images",
     "prepare": "npm run setup",
