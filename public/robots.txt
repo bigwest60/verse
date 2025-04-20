@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: /sitemap.xml # TODO: Replace with production URL if needed 

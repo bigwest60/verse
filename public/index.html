@@ -13,6 +13,43 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   
+  <!-- Canonical URL -->
+  <link rel="canonical" href="/" /> <!-- TODO: Replace with production URL -->
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="/"> <!-- TODO: Replace with production URL -->
+  <meta property="og:title" content="Daily Verse">
+  <meta property="og:description" content="Daily Bible verses with beautiful backgrounds">
+  <meta property="og:image" content="/icon-512.png"> <!-- TODO: Replace with a specific OG image -->
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="/"> <!-- TODO: Replace with production URL -->
+  <meta property="twitter:title" content="Daily Verse">
+  <meta property="twitter:description" content="Daily Bible verses with beautiful backgrounds">
+  <meta property="twitter:image" content="/icon-512.png"> <!-- TODO: Replace with a specific OG image -->
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Daily Verse",
+    "description": "Daily Bible verses with beautiful backgrounds",
+    "url": "/", // TODO: Replace with production URL
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires JavaScript",
+    "offers": {
+      "@type": "Offer",
+      "price": "0"
+    },
+    "image": "/icon-512.png" // TODO: Replace with relevant screenshot or logo
+    // TODO: Add more properties like softwareVersion, releaseNotes etc. if applicable
+  }
+  </script>
+
   <style>
     /* REMOVED inline .verse-theme rule */
     /*
@@ -37,6 +74,19 @@
       /* Removed !important flags */
       position: relative;
       z-index: 5;
+    }
+    
+    /* Class to visually hide elements but keep them accessible */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
     }
   </style>
   
@@ -70,6 +120,7 @@
       </a>
     </header>
     <main>
+      <h1 class="visually-hidden">Daily Bible Verse</h1>
       <div class="verse-card" id="verseCard">
         <p class="verse-theme">LOADING...</p>
         <p class="verse-text" id="verse-text">Loading verse...</p>

@@ -3,8 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Help page for the Daily Verse app, explaining features, shortcuts, and how to install.">
     <title>Daily Verse - Help</title>
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="/help.html" /> <!-- TODO: Replace with production URL -->
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="/help.html"> <!-- TODO: Replace with production URL -->
+    <meta property="og:title" content="Daily Verse - Help">
+    <meta property="og:description" content="Help page for the Daily Verse app, explaining features, shortcuts, and how to install.">
+    <meta property="og:image" content="/icon-512.png"> <!-- TODO: Replace with a specific OG image -->
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="/help.html"> <!-- TODO: Replace with production URL -->
+    <meta property="twitter:title" content="Daily Verse - Help">
+    <meta property="twitter:description" content="Help page for the Daily Verse app, explaining features, shortcuts, and how to install.">
+    <meta property="twitter:image" content="/icon-512.png"> <!-- TODO: Replace with a specific OG image -->
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Daily Verse - Help",
+      "description": "Help page for the Daily Verse app, explaining features, shortcuts, and how to install.",
+      "url": "/help.html" // TODO: Replace with production URL
+      // TODO: Add mainEntityOfPage or other relevant properties if applicable
+    }
+    </script>
+    
     <style>
         /* REMOVED Inline theme overrides, rely on styles.css + JS */
         
@@ -172,67 +203,87 @@
     <!-- <div class="background-layer" id="bg-layer-2"></div> -->
     <!-- <div class="background-overlay"></div> -->
     <div class="app-container">
-        <div class="help-container">
-            <a href="/" class="back-button">← Back to Verses</a>
-            
-            <div class="help-section">
-                <h2>Features</h2>
-                <ul>
-                    <li>New inspirational Bible verse daily</li>
-                    <li>Beautiful background images matching verse themes</li>
-                    <li>Light & Dark mode support (use <kbd>T</kbd> or toggle)</li>
-                    <li>Keyboard shortcuts for easy navigation (see below)</li>
-                    <li>Share verses with others (use <kbd>S</kbd> or button)</li>
-                    <li>Installable for an app-like experience (see below)</li>
-                </ul>
-            </div>
-
-            <div class="help-section">
-                <h2>Keyboard Shortcuts</h2>
-                <div class="shortcut-grid">
-                    <kbd>Space</kbd>
-                    <div>Get a new verse</div>
-                    
-                    <kbd>T</kbd>
-                    <div>Toggle dark/light theme</div>
-                    
-                    <kbd>S</kbd>
-                    <div>Share current verse (uses native share if available, otherwise copies to clipboard)</div>
-                    
-                    <kbd>?</kbd> or <kbd>H</kbd>
-                    <div>Show this help page</div>
-                    
-                    <kbd>Esc</kbd>
-                    <div>Return to verses page</div>
-                </div>
-            </div>
-
-            <div class="help-section">
-                <h2>Installation (Offline Access)</h2>
-                <p>Add Daily Verse to your Home Screen for quick access and an app-like experience, even when offline.</p>
+        <main>
+            <div class="help-container">
+                <a href="/" class="back-button">← Back to Verses</a>
+                <h1>Help</h1>
                 
-                <div class="platform-instructions">
-                    <h3>iPhone / iPad (Safari)</h3>
-                    <ol>
-                        <li>Open Daily Verse in Safari</li>
-                        <li>Tap the Share button (square with arrow) at the bottom of the screen</li>
-                        <li>Scroll down and tap "Add to Home Screen"</li>
-                        <li>Choose a name (or keep the default) and tap "Add"</li>
-                    </ol>
-                </div>
+                <section class="help-section">
+                    <h2>Features</h2>
+                    <ul>
+                        <li>New inspirational Bible verse daily</li>
+                        <li>Beautiful background images matching verse themes</li>
+                        <li>Light & Dark mode support (use <kbd>T</kbd> or toggle)</li>
+                        <li>Keyboard shortcuts for easy navigation (see below)</li>
+                        <li>Share verses with others (use <kbd>S</kbd> or button)</li>
+                        <li>Installable for an app-like experience (see below)</li>
+                    </ul>
+                </section>
 
-                <div class="platform-instructions">
-                    <h3>Android (Chrome)</h3>
-                    <ol>
-                        <li>Open Daily Verse in Chrome</li>
-                        <li>Tap the menu (three dots) in the top right</li>
-                        <li>Tap "Add to Home screen"</li>
-                        <li>Choose a name (or keep the default) and tap "Add"</li>
-                    </ol>
-                </div>
+                <section class="help-section">
+                    <h2>Keyboard Shortcuts</h2>
+                    <div class="shortcut-grid">
+                        <kbd>Space</kbd>
+                        <div>Get a new verse</div>
+                        
+                        <kbd>T</kbd>
+                        <div>Toggle dark/light theme</div>
+                        
+                        <kbd>S</kbd>
+                        <div>Share current verse (uses native share if available, otherwise copies to clipboard)</div>
+                        
+                        <kbd>?</kbd> or <kbd>H</kbd>
+                        <div>Show this help page</div>
+                        
+                        <kbd>Esc</kbd>
+                        <div>Return to verses page</div>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h2>Installation (Offline Access)</h2>
+                    <p>Add Daily Verse to your Home Screen for quick access and an app-like experience, even when offline.</p>
+                    
+                    <div class="platform-instructions">
+                        <h3>iPhone / iPad (Safari)</h3>
+                        <ol>
+                            <li>Open Daily Verse in Safari</li>
+                            <li>Tap the Share button (square with arrow) at the bottom of the screen</li>
+                            <li>Scroll down and tap "Add to Home Screen"</li>
+                            <li>Choose a name (or keep the default) and tap "Add"</li>
+                        </ol>
+                    </div>
+
+                    <div class="platform-instructions">
+                        <h3>Android (Chrome)</h3>
+                        <ol>
+                            <li>Open Daily Verse in Chrome</li>
+                            <li>Tap the menu (three dots) in the top right</li>
+                            <li>Tap "Add to Home screen"</li>
+                            <li>Choose a name (or keep the default) and tap "Add"</li>
+                        </ol>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h2>Troubleshooting</h2>
+                    <ul>
+                        <li>If you encounter any issues, please check your internet connection and try again later.</li>
+                        <li>If the app is not loading properly, try clearing your browser cache and restarting the app.</li>
+                    </ul>
+                </section>
+
+                <section class="help-section">
+                    <h2>Privacy & Data</h2>
+                    <p>This app operates entirely in your browser...</p>
+                </section>
+
+                <section class="help-section">
+                    <h2>About</h2>
+                    <p>Daily Verse provides a moment of reflection...</p>
+                </section>
             </div>
-
-        </div>
+        </main>
     </div>
     <script>
         document.addEventListener('keydown', function(event) {

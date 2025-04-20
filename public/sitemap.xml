@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>/</loc> <!-- TODO: Replace with production URL -->
+    <lastmod>2024-07-31</lastmod> <!-- TODO: Update dynamically or remove -->
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>/help.html</loc> <!-- TODO: Replace with production URL -->
+    <lastmod>2024-07-31</lastmod> <!-- TODO: Update dynamically or remove -->
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset> 
