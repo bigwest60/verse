@@ -36,6 +36,23 @@
     </script>
 
     <style>
+        /* Skip navigation */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 0;
+            background: var(--button-background, #4a5568);
+            color: var(--button-text, #ffffff);
+            padding: 0.5rem 1rem;
+            z-index: 100;
+            border-radius: 4px;
+            transition: top 0.2s ease;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
         .help-container {
             max-width: 800px;
             margin: 40px auto; /* Add top/bottom margin */
@@ -255,7 +272,8 @@
 </head>
 <body>
     <div class="app-container">
-        <main>
+        <a href="#main-content" class="skip-link">Skip to content</a>
+        <main id="main-content">
             <div class="help-container">
                 <a href="/" class="back-button">← Back to Verses</a>
                 <h1>Help</h1>

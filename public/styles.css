@@ -285,6 +285,23 @@ main {
   to { transform: rotate(360deg); }
 }
 
+/* Skip navigation */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: var(--button-background);
+  color: var(--button-text);
+  padding: var(--spacing-sm) var(--spacing-md);
+  z-index: 100;
+  border-radius: var(--border-radius-sm);
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
 /* Header styles */
 header {
   position: fixed;
