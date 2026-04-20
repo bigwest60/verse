@@ -1,10 +1,10 @@
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { execSync } from 'child_process';
 
 // Load environment variables
 dotenv.config();
@@ -16,10 +16,9 @@ const __dirname = path.dirname(__filename);
 // Constants
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const VERSES_PATH = path.join(__dirname, '../public/verses.json');
 const DEBUG = process.env.DEBUG || !IS_PROD;
 const HTML_PATH = path.join(__dirname, '../public/index.html');
+const HELP_HTML_PATH = path.join(__dirname, '../public/help.html');
 const ESBUILD_META_PATH = path.join(__dirname, '../esbuild-meta.json');
 const CSS_MANIFEST_PATH = path.join(__dirname, '../scripts/.css-manifest.txt');
 
@@ -27,7 +26,6 @@ const CSS_MANIFEST_PATH = path.join(__dirname, '../scripts/.css-manifest.txt');
 if (DEBUG) {
   console.log('---- Server Debug Info ----');
   console.log(`Current directory: ${__dirname}`);
-  console.log(`Verses path: ${VERSES_PATH}`);
   console.log(`Environment: ${IS_PROD ? 'production' : 'development'}`);
   console.log(`Node version: ${process.version}`);
   console.log('--------------------------');
@@ -37,8 +35,11 @@ if (DEBUG) {
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(helmet());
+app.use(cors({
+  origin: IS_PROD ? 'https://dailyverse.online' : 'http://localhost:3000',
+  methods: ['GET']
+}));
 
 // Add request logging in debug mode
 if (DEBUG) {
@@ -83,6 +84,7 @@ if (IS_PROD) {
 app.use(express.static('public', {
   index: false,
   extensions: ['html', 'htm'],
+  dotfiles: 'deny',
   setHeaders: (res, path) => {
     // Set content type for WebP images
     if (path.endsWith('.webp')) {
@@ -90,123 +92,6 @@ app.use(express.static('public', {
     }
   }
 }));
-
-// Cache for verses data
-let versesCache = {
-  data: null,
-  timestamp: 0,
-  retryCount: 0,
-  maxRetries: 3,
-  retryDelay: 1000, // 1 second
-  lastVerse: null,  // Track the last verse served
-  shuffledVerses: [], // Store shuffled verses
-  currentIndex: 0    // Track current position in shuffled array
-};
-
-/**
- * Implements Fisher-Yates shuffle algorithm
- * @param {Array} array The array to shuffle
- * @returns {Array} A new shuffled array
- */
-function shuffleArray(array) {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-/**
- * Get the next verse from the shuffled array
- * @param {Object} verses The verses data object
- * @returns {Object} A verse object
- */
-function getNextVerse(verses) {
-  // If we've used all verses or haven't initialized, shuffle them
-  if (versesCache.currentIndex >= versesCache.shuffledVerses.length || !versesCache.shuffledVerses.length) {
-    versesCache.shuffledVerses = shuffleArray(verses.verses);
-    versesCache.currentIndex = 0;
-  }
-
-  // Get next verse
-  let verse = versesCache.shuffledVerses[versesCache.currentIndex];
-  
-  // If it's the same as the last verse and we have more verses available,
-  // skip to the next one to prevent consecutive repeats
-  if (versesCache.lastVerse && 
-      verse.reference === versesCache.lastVerse.reference && 
-      versesCache.currentIndex + 1 < versesCache.shuffledVerses.length) {
-    versesCache.currentIndex++;
-    verse = versesCache.shuffledVerses[versesCache.currentIndex];
-  }
-  
-  // Update tracking variables
-  versesCache.lastVerse = verse;
-  versesCache.currentIndex++;
-  
-  return verse;
-}
-
-/**
- * Load verses data with caching and retry mechanism
- * @returns {Promise<Object>}
- */
-async function loadVerses() {
-  const now = Date.now();
-  
-  // Return cached data if valid
-  if (versesCache.data && (now - versesCache.timestamp) < CACHE_DURATION) {
-    return versesCache.data;
-  }
-  
-  try {
-    // Check if verses.json exists
-    if (!fs.existsSync(VERSES_PATH)) {
-      throw new Error('verses.json not found. Please ensure the file exists in the public directory.');
-    }
-    
-    if (DEBUG) console.log(`Reading verses from ${VERSES_PATH}`);
-    const data = fs.readFileSync(VERSES_PATH, 'utf8');
-    if (DEBUG) console.log(`Verses file size: ${data.length} bytes`);
-    
-    try {
-      const verses = JSON.parse(data);
-      if (DEBUG) console.log(`Parsed ${verses.verses?.length || 0} verses successfully`);
-      
-      // Reset retry count on success
-      versesCache = {
-        data: verses,
-        timestamp: now,
-        retryCount: 0,
-        maxRetries: versesCache.maxRetries,
-        retryDelay: versesCache.retryDelay,
-        lastVerse: null,
-        shuffledVerses: [],
-        currentIndex: 0
-      };
-      
-      return verses;
-    } catch (parseError) {
-      console.error('Error parsing verses JSON:', parseError);
-      console.error('First 100 characters of data:', data.substring(0, 100));
-      throw new Error('Failed to parse verses JSON');
-    }
-  } catch (error) {
-    console.error('Error loading verses:', error);
-    
-    // Implement retry logic
-    if (versesCache.retryCount < versesCache.maxRetries) {
-      versesCache.retryCount++;
-      console.log(`Retrying in ${versesCache.retryDelay}ms (attempt ${versesCache.retryCount}/${versesCache.maxRetries})...`);
-      
-      await new Promise(resolve => setTimeout(resolve, versesCache.retryDelay));
-      return loadVerses(); // Recursive retry
-    }
-    
-    throw error;
-  }
-}
 
 // Helper to read manifest files - caching result in production
 let assetPaths = null;
@@ -250,8 +135,8 @@ app.get('/', (req, res) => {
       const htmlTemplate = fs.readFileSync(HTML_PATH, 'utf8');
       const assets = getAssetPaths();
       const injectedHtml = htmlTemplate
-        .replace('<!-- CSS_FILENAME -->', `<link rel="stylesheet" href="${assets.css}">`)
-        .replace('<!-- JS_FILENAME -->', `<script src="${assets.js}"></script>`);
+        .replace(/<!-- CSS_FILENAME --><link[^>]+>/, `<link rel="stylesheet" href="${assets.css}">`)
+        .replace(/<!-- JS_FILENAME --><script[^>]+><\/script>/, `<script src="${assets.js}"><\/script>`);
       
       // Set appropriate headers for HTML in prod (no-cache already handled by middleware)
       res.set('Content-Type', 'text/html');
@@ -266,47 +151,22 @@ app.get('/', (req, res) => {
   }
 });
 
-// API routes
-app.get('/api/verse', async (req, res) => {
-  try {
-    const verses = await loadVerses();
-    const verse = getNextVerse(verses);
-    
-    res.set({
-      'Cache-Control': 'no-cache',
-      'Content-Type': 'application/json'
-    });
-    
-    res.json(verse);
-  } catch (error) {
-    console.error('Error fetching random verse:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch verse',
-      details: error.message
-    });
-  }
-});
-
-app.get('/api/verse/meta', async (req, res) => {
-  try {
-    const verses = await loadVerses();
-    const meta = {
-      count: verses.verses.length,
-      themes: [...new Set(verses.verses.map(v => v.theme))].sort()
-    };
-    
-    res.set({
-      'Cache-Control': 'public, max-age=3600',
-      'Content-Type': 'application/json'
-    });
-    
-    res.json(meta);
-  } catch (error) {
-    console.error('Error fetching verse metadata:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch verse metadata',
-      details: error.message
-    });
+app.get('/help.html', (req, res) => {
+  if (IS_PROD) {
+    try {
+      const htmlTemplate = fs.readFileSync(HELP_HTML_PATH, 'utf8');
+      const assets = getAssetPaths();
+      const injectedHtml = htmlTemplate
+        .replace('<link rel="stylesheet" href="styles.css">', `<link rel="stylesheet" href="${assets.css}">`);
+      
+      res.set('Content-Type', 'text/html');
+      res.send(injectedHtml);
+    } catch (e) {
+      console.error('Error serving modified help.html:', e);
+      res.status(500).send('Server error serving HTML');
+    }
+  } else {
+    res.sendFile(HELP_HTML_PATH);
   }
 });
 
@@ -329,20 +189,12 @@ app.get('/manifest.json', (req, res) => {
   });
 });
 
-app.get('/icon-192.png', (req, res) => {
-  res.sendStatus(204);
-});
-
-app.get('/favicon.ico', (req, res) => {
-  res.sendStatus(204);
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({
     error: 'Internal server error',
-    message: err.message
+    ...(IS_PROD ? {} : { message: err.message })
   });
 });
 
@@ -357,12 +209,12 @@ app.use((req, res) => {
 // Handle process errors
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
-  // Don't exit the process, just log the error
+  process.exit(1);
 });
 
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled rejection:', err);
-  // Don't exit the process, just log the error
+  process.exit(1);
 });
 
 // Start server
@@ -394,4 +246,4 @@ process.on('SIGINT', () => {
 });
 
 // Keep the process running
-process.stdin.resume(); 
+process.stdin.resume();

@@ -16,6 +16,7 @@ const imageCache = new Map();
 // State
 let currentVerse = null;
 let isLoading = false;
+let versesCache = null;
 
 // DOM Elements
 let verseCard;
@@ -216,12 +217,15 @@ async function fetchVerse() {
   verseReference.classList.add('fade-out');
   
   try {
-    // Fetch verses from JSON file
-    const response = await fetch('/verses.json');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Fetch verses from JSON file (cached after first load)
+    if (!versesCache) {
+      const response = await fetch('/verses.json');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      versesCache = await response.json();
     }
-    const data = await response.json(); // Parse the entire JSON object
+    const data = versesCache;
     
     // Check if the nested 'verses' property is a non-empty array
     if (!data || !Array.isArray(data.verses) || data.verses.length === 0) {
@@ -255,10 +259,6 @@ async function fetchVerse() {
         verseReference.classList.remove('fade-out');
       }
       
-      // Remove CARD loading state
-      // verseCard.classList.remove('loading'); // Removed this, handled later
-      
-      // RESET BUTTON STATE HERE
       if (newVerseBtn) {
         newVerseBtn.disabled = false;
         newVerseBtn.classList.remove('loading');
@@ -276,15 +276,9 @@ async function fetchVerse() {
     console.error('Error fetching verse:', error);
     if (verseText) verseText.textContent = 'Error fetching verse.';
     if (verseReference) verseReference.textContent = '';
-    setThemeText(''); // Set theme to error state
+    setThemeText('');
   } finally {
     isLoading = false;
-    // REMOVED button reset from here
-    // if (newVerseBtn) {
-    //   newVerseBtn.disabled = false;
-    //   newVerseBtn.classList.remove('loading'); 
-    // }
-    // Ensure verse card loading state is removed if an error happened early
     if (verseCard && verseCard.classList.contains('loading')) {
       verseCard.classList.remove('loading');
     }
@@ -313,10 +307,6 @@ async function shareVerse() {
     
     const shareText = `${currentVerse.text}\n\n— ${currentVerse.reference}`;
     
-    // Restore original code
-    // fallbackShare(shareText);
-    
-    // Original code:
     if (navigator.share) {
         try {
             await navigator.share({
@@ -331,7 +321,6 @@ async function shareVerse() {
     } else {
         fallbackShare(shareText);
     }
-    // End of original code
 }
 
 function fallbackShare(text) {
@@ -417,14 +406,6 @@ function init() {
     const currentTheme = verseCard.querySelector('.verse-theme')?.textContent?.trim().toLowerCase();
     if (currentTheme && !['loading', 'error'].includes(currentTheme)) {
       setThemeText(currentTheme);
-    }
-  });
-  
-  // Handle spacebar press
-  document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && e.target === document.body) {
-      e.preventDefault();
-      document.getElementById('newVerseBtn').click();
     }
   });
   

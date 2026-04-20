@@ -8,14 +8,10 @@
     "node": ">=18"
   },
   "scripts": {
-    "dev": "node scripts/dev.js",
-    "list": "node scripts/dev.js list",
-    "generate": "node scripts/dev.js generate",
-    "parse-prd": "node scripts/dev.js parse-prd",
     "start": "node src/index.js",
     "clean": "rm -f public/verses.json && rm -rf public/images",
     "build": "npm run build:js && npm run build:css && npm run optimize:images && npm run build:sitemap",
-    "build:js": "esbuild public/app.js --bundle --minify --format=esm --entry-names=\"[name]-[hash]\" --outdir=public --metafile=esbuild-meta.json",
+    "build:js": "rm -f public/app-*.js && esbuild public/app.js --bundle --minify --format=esm --entry-names=\"[name]-[hash]\" --outdir=public --metafile=esbuild-meta.json",
     "build:css": "postcss public/styles.css | node scripts/hash-css.js",
     "optimize:images": "node scripts/optimize-images.js",
     "build:sitemap": "node scripts/update-sitemap.cjs",
@@ -28,24 +24,10 @@
     "build:static": "npm run build && npm run static"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
-    "boxen": "^7.1.1",
-    "canvas": "^3.1.0",
-    "chalk": "^5.3.0",
-    "cli-table3": "^0.6.3",
-    "commander": "^11.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^5.1.0",
-    "fastmcp": "^1.20.5",
-    "figlet": "^1.7.0",
-    "fuse.js": "^7.0.0",
-    "gradient-string": "^2.0.2",
     "helmet": "^8.1.0",
-    "inquirer": "^12.5.0",
-    "lru-cache": "^10.2.0",
-    "openai": "^4.86.1",
-    "ora": "^7.0.1",
     "sharp": "^0.33.2"
   },
   "devDependencies": {
@@ -60,13 +42,11 @@
   "knip": {
     "entry": [
       "src/index.js!",
-      "public/app.js!",
-      "scripts/**/*.js!"
+      "public/app.js!"
     ],
     "project": [
       "src/**/*.js",
-      "public/**/*.js",
-      "scripts/**/*.js"
+      "public/**/*.js"
     ],
     "ignore": [
       "node_modules",

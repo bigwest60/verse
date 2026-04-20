@@ -74,8 +74,8 @@ function generateStaticSite() {
   try {
     const indexHtmlTemplate = fs.readFileSync(HTML_TEMPLATE_PATH, 'utf8');
     const injectedIndexHtml = indexHtmlTemplate
-      .replace('<!-- CSS_FILENAME -->', `<link rel="stylesheet" href="/${cssFilename}">`)
-      .replace('<!-- JS_FILENAME -->', `<script src="/${jsFilename}"></script>`);
+      .replace(/<!-- CSS_FILENAME --><link[^>]+>/, `<link rel="stylesheet" href="/${cssFilename}">`)
+      .replace(/<!-- JS_FILENAME --><script[^>]+><\/script>/, `<script src="/${jsFilename}"><\/script>`);
     fs.writeFileSync(path.join(DIST_DIR, 'index.html'), injectedIndexHtml);
     console.log(`  Generated dist/index.html with injected assets.`);
   } catch (e) {
@@ -109,12 +109,13 @@ function generateStaticSite() {
     // 'help.html', 
     'manifest.json',
     'verses.json',
-    // Icons (add any other icons you have)
+    // Icons
     'icon-192.png',
-    // 'icon-512.png',
-    // 'icon.svg',
-    // 'apple-touch-icon.png',
-    // 'apple-touch-icon-precomposed.png'
+    'icon-512.png',
+    'icon.svg',
+    'apple-touch-icon.png',
+    'apple-touch-icon-precomposed.png',
+    'favicon.ico'
   ];
 
   assetsToCopy.forEach(file => {

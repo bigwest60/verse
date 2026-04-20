@@ -24,15 +24,6 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
-# Task files
-tasks/
-tasks.json
-
-# Added by Claude Task Master
-logs
-yarn-debug.log*
-yarn-error.log*
-dev-debug.log
 # Dependency directories
 # Editor directories and files
 .idea

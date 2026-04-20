@@ -11,6 +11,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
+if (!UNSPLASH_ACCESS_KEY) {
+  console.warn('Warning: UNSPLASH_ACCESS_KEY not set. Generating fallback gradient images instead of Unsplash photos.');
+}
+
 // Theme-based background image URLs
 const THEME_IMAGES = {
   love: { query: 'love nature landscape', light: true, dark: true },
