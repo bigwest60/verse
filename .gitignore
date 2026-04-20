@@ -34,3 +34,12 @@ Thumbs.db
 *.sln
 *.sw?
 # OS specific
+.gstack/
+
+# Build artifacts
+dist/
+public/app-*.js
+public/styles-*.min.css
+public/styles.min.css
+esbuild-meta.json
+scripts/.css-manifest.txt

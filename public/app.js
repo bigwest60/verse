@@ -7,6 +7,7 @@ const config = {
 
 // Keep track of current background state
 let isLoadingBackground = false;
+let pendingThemeChange = null;
 let currentBackgroundImage = '';
 let activeLayer = 1;
 
@@ -121,8 +122,11 @@ async function setThemeText(theme) {
     // Don't transition to the same image
     if (currentBackgroundImage === imagePath) return;
 
-    // Prevent multiple simultaneous transitions
-    if (isLoadingBackground) return;
+    // Queue theme changes during active transition instead of dropping them
+    if (isLoadingBackground) {
+      pendingThemeChange = theme;
+      return;
+    }
     
     isLoadingBackground = true;
 
@@ -193,6 +197,12 @@ async function setThemeText(theme) {
       }
     } finally {
       isLoadingBackground = false;
+      // Process queued theme change if one was requested during transition
+      if (pendingThemeChange) {
+        const queued = pendingThemeChange;
+        pendingThemeChange = null;
+        setThemeText(queued);
+      }
     }
   }
 }
@@ -323,24 +333,35 @@ async function shareVerse() {
     }
 }
 
-function fallbackShare(text) {
-    // Create a temporary textarea
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    
-    document.body.appendChild(textarea);
-    textarea.select();
-    
+async function fallbackShare(text) {
+  // Try modern Clipboard API first
+  if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
-        document.execCommand('copy');
-        showToast('Verse copied to clipboard!', 'success');
-    } catch (error) {
-        showToast('Could not copy verse.', 'error');
+      await navigator.clipboard.writeText(text);
+      showToast('Verse copied to clipboard!', 'success');
+      return;
+    } catch {
+      // Fall through to execCommand
     }
-    
-    document.body.removeChild(textarea);
+  }
+  
+  // Legacy fallback
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  
+  document.body.appendChild(textarea);
+  textarea.select();
+  
+  try {
+    document.execCommand('copy');
+    showToast('Verse copied to clipboard!', 'success');
+  } catch {
+    showToast('Could not copy verse.', 'error');
+  }
+  
+  document.body.removeChild(textarea);
 }
 
 // Initialize

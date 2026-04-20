@@ -24,11 +24,9 @@
     "build:static": "npm run build && npm run static"
   },
   "dependencies": {
-    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^5.1.0",
-    "helmet": "^8.1.0",
-    "sharp": "^0.33.2"
+    "helmet": "^8.1.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
@@ -37,7 +35,8 @@
     "knip": "^5.50.5",
     "postcss": "^8.5.3",
     "postcss-cli": "^11.0.1",
-    "serve": "^14.2.4"
+    "serve": "^14.2.4",
+    "sharp": "^0.33.2"
   },
   "knip": {
     "entry": [

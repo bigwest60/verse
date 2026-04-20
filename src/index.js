@@ -1,14 +1,15 @@
 import express from 'express';
 import path from 'path';
-import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import crypto from 'crypto';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables in development only
+if (process.env.NODE_ENV !== 'production') {
+  const dotenv = await import('dotenv');
+  dotenv.config();
+}
 
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -47,6 +48,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
+      scriptSrcAttr: ["'none'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "blob:"],
       connectSrc: ["'self'"],
@@ -56,11 +58,6 @@ app.use(helmet({
     }
   }
 }));
-app.use(cors({
-  origin: IS_PROD ? 'https://dailyverse.online' : 'http://localhost:3000',
-  methods: ['GET']
-}));
-
 // Add request logging in debug mode
 if (DEBUG) {
   app.use((req, res, next) => {
@@ -134,6 +131,21 @@ function getAssetPaths() {
   return assetPaths;
 }
 
+// Cache HTML templates in production
+let indexHtmlCache = null;
+let helpHtmlCache = null;
+
+function getIndexHtml() {
+  if (indexHtmlCache && IS_PROD) return indexHtmlCache;
+  indexHtmlCache = fs.readFileSync(HTML_PATH, 'utf8');
+  return indexHtmlCache;
+}
+function getHelpHtml() {
+  if (helpHtmlCache && IS_PROD) return helpHtmlCache;
+  helpHtmlCache = fs.readFileSync(HELP_HTML_PATH, 'utf8');
+  return helpHtmlCache;
+}
+
 // Inject nonce into inline scripts
 function injectNonce(html, nonce) {
   return html
@@ -146,7 +158,7 @@ app.get('/', (req, res) => {
   const nonce = res.locals.nonce;
   if (IS_PROD) {
     try {
-      const htmlTemplate = fs.readFileSync(HTML_PATH, 'utf8');
+      const htmlTemplate = getIndexHtml();
       const assets = getAssetPaths();
       const injectedHtml = injectNonce(htmlTemplate, nonce)
         .replace(/<!-- CSS_FILENAME --><link[^>]+>/, `<link rel="stylesheet" href="${assets.css}">`)
@@ -159,7 +171,7 @@ app.get('/', (req, res) => {
       res.status(500).send('Server error serving HTML');
     }
   } else {
-    const htmlTemplate = fs.readFileSync(HTML_PATH, 'utf8');
+    const htmlTemplate = getIndexHtml();
     res.set('Content-Type', 'text/html');
     res.send(injectNonce(htmlTemplate, nonce));
   }
@@ -169,7 +181,7 @@ app.get('/help.html', (req, res) => {
   const nonce = res.locals.nonce;
   if (IS_PROD) {
     try {
-      const htmlTemplate = fs.readFileSync(HELP_HTML_PATH, 'utf8');
+      const htmlTemplate = getHelpHtml();
       const assets = getAssetPaths();
       const injectedHtml = injectNonce(htmlTemplate, nonce)
         .replace('<link rel="stylesheet" href="styles.css">', `<link rel="stylesheet" href="${assets.css}">`);
@@ -181,11 +193,22 @@ app.get('/help.html', (req, res) => {
       res.status(500).send('Server error serving HTML');
     }
   } else {
-    const htmlTemplate = fs.readFileSync(HELP_HTML_PATH, 'utf8');
+    const htmlTemplate = getHelpHtml();
     res.set('Content-Type', 'text/html');
     res.send(injectNonce(htmlTemplate, nonce));
   }
 });
+
+// Block unminified source files in production
+if (IS_PROD) {
+  app.use((req, res, next) => {
+    const blocked = ['/app.js', '/styles.css', '/styles.min.css', '/icon.html'];
+    if (blocked.some(p => req.path === p)) {
+      return res.status(404).end();
+    }
+    next();
+  });
+}
 
 // Serve static files (after HTML routes)
 app.use(express.static('public', {
@@ -201,20 +224,6 @@ app.use(express.static('public', {
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
-});
-
-// Handle PWA-related requests
-app.get('/manifest.json', (req, res) => {
-  res.json({
-    name: 'Daily Verse',
-    short_name: 'Verse',
-    display: 'browser',
-    start_url: '/',
-    scope: '/',
-    background_color: '#000000',
-    theme_color: '#000000',
-    icons: []
-  });
 });
 
 // Error handling middleware
@@ -237,12 +246,14 @@ app.use((req, res) => {
 // Handle process errors
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
+  // Don't exit on expected errors (e.g. broken pipe, browser disconnect)
+  if (err.code === 'ECONNRESET' || err.code === 'ERR_HTTP2_SESSION_ERROR') return;
   process.exit(1);
 });
 
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled rejection:', err);
-  process.exit(1);
+  // Log but don't exit — unhandled rejections shouldn't crash the server
 });
 
 // Start server

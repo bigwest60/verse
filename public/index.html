@@ -48,28 +48,6 @@
   }
   </script>
 
-  <style>
-    .verse-card {
-      position: relative;
-      z-index: 5;
-    }
-    
-    .visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border-width: 0;
-    }
-  </style>
-  
-  <!-- Prevent PWA installation prompts -->
-  <meta name="mobile-web-app-capable" content="no">
-  <meta name="apple-mobile-web-app-capable" content="no">
 </head>
 <body>
   <div class="background-layer" id="bg-layer-1"></div>
@@ -112,14 +90,6 @@
     </main>
   </div>
   
-  <script>
-    // Prevent service worker registration
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => registration.unregister());
-      });
-    }
-  </script>
   <!-- JS_FILENAME --><script src="/app.js"></script>
   
   <noscript>
