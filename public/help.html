@@ -168,6 +168,63 @@
         .app-container {
             padding: 20px;
         }
+
+        /* Focus-visible for help page */
+        :focus-visible {
+            outline: 2px solid var(--focus-outline-color);
+            outline-offset: 2px;
+        }
+
+        .back-button:focus-visible {
+            outline-offset: 4px;
+        }
+
+        /* Responsive for help page */
+        @media (max-width: 640px) {
+            .help-container {
+                margin: var(--spacing-md) auto;
+                padding: var(--spacing-md);
+            }
+
+            .help-section h2 {
+                font-size: 1.25rem;
+            }
+
+            .shortcut-grid {
+                gap: 8px;
+            }
+
+            kbd {
+                font-size: 0.85em;
+                padding: 3px 6px;
+            }
+        }
+
+        /* Reduced motion for help page */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High contrast for help page */
+        @media (prefers-contrast: high) {
+            .help-container {
+                border-width: 2px;
+            }
+
+            .help-section h2 {
+                border-bottom-width: 3px;
+            }
+
+            kbd {
+                border-width: 2px;
+            }
+        }
         
     </style>
     <script>
@@ -176,9 +233,10 @@
             localStorage.setItem('theme', theme);
         }
 
-        // Initialize theme from localStorage
+        // Initialize theme from localStorage or system preference
         const savedTheme = localStorage.getItem('theme');
-        setTheme(savedTheme || 'light');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
 
         // Listen for theme changes in localStorage
         window.addEventListener('storage', (e) => {
@@ -190,7 +248,8 @@
         // Force theme check on load
         window.addEventListener('load', () => {
             const currentTheme = localStorage.getItem('theme');
-            setTheme(currentTheme || 'light');
+            const sysPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setTheme(currentTheme || (sysPref ? 'dark' : 'light'));
         });
     </script>
 </head>
