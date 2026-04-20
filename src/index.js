@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import crypto from 'crypto';
 
 // Load environment variables
 dotenv.config();
@@ -34,8 +35,27 @@ if (DEBUG) {
 // Initialize Express app
 const app = express();
 
-// Middleware
-app.use(helmet());
+// Generate nonce for inline scripts
+app.use((req, res, next) => {
+  res.locals.nonce = crypto.randomUUID();
+  next();
+});
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: IS_PROD ? [] : null,
+    }
+  }
+}));
 app.use(cors({
   origin: IS_PROD ? 'https://dailyverse.online' : 'http://localhost:3000',
   methods: ['GET']
@@ -80,19 +100,6 @@ if (IS_PROD) {
   });
 }
 
-// Serve static files
-app.use(express.static('public', {
-  index: false,
-  extensions: ['html', 'htm'],
-  dotfiles: 'deny',
-  setHeaders: (res, path) => {
-    // Set content type for WebP images
-    if (path.endsWith('.webp')) {
-      res.set('Content-Type', 'image/webp');
-    }
-  }
-}));
-
 // Helper to read manifest files - caching result in production
 let assetPaths = null;
 function getAssetPaths() {
@@ -108,7 +115,6 @@ function getAssetPaths() {
       // Read JS filename from esbuild meta
       if (fs.existsSync(ESBUILD_META_PATH)) {
         const meta = JSON.parse(fs.readFileSync(ESBUILD_META_PATH, 'utf8'));
-        // Find the output file corresponding to the entry point
         const outputKey = Object.keys(meta.outputs).find(key => meta.outputs[key].entryPoint === 'public/app.js');
         if (outputKey) {
           jsFilename = `/${path.basename(outputKey)}`;
@@ -128,17 +134,24 @@ function getAssetPaths() {
   return assetPaths;
 }
 
-// Routes
+// Inject nonce into inline scripts
+function injectNonce(html, nonce) {
+  return html
+    .replace(/<script>/g, `<script nonce="${nonce}">`)
+    .replace(/<script type="application\/ld\+json">/g, `<script type="application/ld+json" nonce="${nonce}">`);
+}
+
+// HTML routes (before static middleware so they take precedence)
 app.get('/', (req, res) => {
+  const nonce = res.locals.nonce;
   if (IS_PROD) {
     try {
       const htmlTemplate = fs.readFileSync(HTML_PATH, 'utf8');
       const assets = getAssetPaths();
-      const injectedHtml = htmlTemplate
+      const injectedHtml = injectNonce(htmlTemplate, nonce)
         .replace(/<!-- CSS_FILENAME --><link[^>]+>/, `<link rel="stylesheet" href="${assets.css}">`)
         .replace(/<!-- JS_FILENAME --><script[^>]+><\/script>/, `<script src="${assets.js}"><\/script>`);
       
-      // Set appropriate headers for HTML in prod (no-cache already handled by middleware)
       res.set('Content-Type', 'text/html');
       res.send(injectedHtml);
     } catch (e) {
@@ -146,17 +159,19 @@ app.get('/', (req, res) => {
       res.status(500).send('Server error serving HTML');
     }
   } else {
-    // Development: serve the original index.html
-    res.sendFile(HTML_PATH);
+    const htmlTemplate = fs.readFileSync(HTML_PATH, 'utf8');
+    res.set('Content-Type', 'text/html');
+    res.send(injectNonce(htmlTemplate, nonce));
   }
 });
 
 app.get('/help.html', (req, res) => {
+  const nonce = res.locals.nonce;
   if (IS_PROD) {
     try {
       const htmlTemplate = fs.readFileSync(HELP_HTML_PATH, 'utf8');
       const assets = getAssetPaths();
-      const injectedHtml = htmlTemplate
+      const injectedHtml = injectNonce(htmlTemplate, nonce)
         .replace('<link rel="stylesheet" href="styles.css">', `<link rel="stylesheet" href="${assets.css}">`);
       
       res.set('Content-Type', 'text/html');
@@ -166,9 +181,22 @@ app.get('/help.html', (req, res) => {
       res.status(500).send('Server error serving HTML');
     }
   } else {
-    res.sendFile(HELP_HTML_PATH);
+    const htmlTemplate = fs.readFileSync(HELP_HTML_PATH, 'utf8');
+    res.set('Content-Type', 'text/html');
+    res.send(injectNonce(htmlTemplate, nonce));
   }
 });
+
+// Serve static files (after HTML routes)
+app.use(express.static('public', {
+  index: false,
+  dotfiles: 'deny',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.webp')) {
+      res.set('Content-Type', 'image/webp');
+    }
+  }
+}));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
