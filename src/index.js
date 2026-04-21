@@ -5,12 +5,6 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import crypto from 'crypto';
 
-// Load environment variables in development only
-if (process.env.NODE_ENV !== 'production') {
-  const dotenv = await import('dotenv');
-  dotenv.config();
-}
-
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
