@@ -1,55 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import https from 'https';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
-const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
-if (!UNSPLASH_ACCESS_KEY) {
-  console.warn('Warning: UNSPLASH_ACCESS_KEY not set. Generating fallback gradient images instead of Unsplash photos.');
-}
-
-// Theme-based background image URLs
-const THEME_IMAGES = {
-  love: { query: 'love nature landscape', light: true, dark: true },
-  guidance: { query: 'path forest nature', light: true, dark: true },
-  trust: { query: 'mountain sunrise', light: true, dark: true },
-  strength: { query: 'rock cliff nature', light: true, dark: true },
-  purpose: { query: 'road horizon landscape', light: true, dark: true },
-  rest: { query: 'peaceful lake nature', light: true, dark: true },
-  hope: { query: 'sunrise mountain landscape', light: true, dark: true },
-  future: { query: 'stars night sky', light: true, dark: true },
-  transformation: { query: 'butterfly nature macro', light: true, dark: true },
-  newness: { query: 'spring bloom nature', light: true, dark: true },
-  refuge: { query: 'shelter forest nature', light: true, dark: true },
-  fruit: { query: 'fruit tree garden', light: true, dark: true },
-  faith: { query: 'church architecture', light: true, dark: true },
-  wisdom: { query: 'ancient library', light: true, dark: true },
-  care: { query: 'hands helping nature', light: true, dark: true },
-  courage: { query: 'lion animal nature', light: true, dark: true },
-  mission: { query: 'compass journey', light: true, dark: true },
-  creation: { query: 'galaxy space stars', light: true, dark: true },
-  heaven: { query: 'clouds sky sunset', light: true, dark: true },
-  salvation: { query: 'light breaking through clouds', light: true, dark: true },
-  stewardship: { query: 'garden harvest nature', light: true, dark: true },
-  evangelism: { query: 'open door light', light: true, dark: true },
-  prayer: { query: 'peaceful mountain sunrise', light: true, dark: true },
-  holiness: { query: 'pure white lily flower', light: true, dark: true },
-  joy: { query: 'waterfall rainbow nature', light: true, dark: true },
-  discipleship: { query: 'path following footsteps', light: true, dark: true },
-  service: { query: 'helping hands community', light: true, dark: true },
-  unity: { query: 'flock birds flying together', light: true, dark: true },
-  peace: { query: 'calming blue-green tones', light: true, dark: true },
-  worship: { query: 'cathedral light rays', light: true, dark: true }
-};
-
-// Theme colors for fallback images
+// Theme colors for gradient background images
 const THEME_COLORS = {
   love: { light: ['#ffd6d6', '#ffecec'], dark: ['#4d2626', '#332626'] },
   guidance: { light: ['#d6e6ff', '#ecf2ff'], dark: ['#26334d', '#262d33'] },
@@ -94,99 +51,7 @@ function ensureDirectoryExists(dir) {
 }
 
 /**
- * Download an image from a URL
- * @param {string} url Image URL
- * @param {string} dest Destination path
- * @returns {Promise<void>}
- */
-function downloadImage(url, dest) {
-  return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(dest);
-    
-    const options = {
-      headers: {
-        'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`
-      }
-    };
-    
-    https.get(url, options, (response) => {
-      if (response.statusCode === 302 || response.statusCode === 301) {
-        // Handle redirects
-        https.get(response.headers.location, (redirectResponse) => {
-          if (redirectResponse.statusCode !== 200) {
-            reject(new Error(`Failed to download image: ${redirectResponse.statusCode}`));
-            return;
-          }
-          redirectResponse.pipe(file);
-        }).on('error', (err) => {
-          fs.unlink(dest, () => {});
-          reject(err);
-        });
-      } else if (response.statusCode !== 200) {
-        reject(new Error(`Failed to download image: ${response.statusCode}`));
-        return;
-      } else {
-        response.pipe(file);
-      }
-      
-      file.on('finish', () => {
-        file.close();
-        resolve();
-      });
-    }).on('error', (err) => {
-      fs.unlink(dest, () => {}); // Clean up partial file
-      reject(err);
-    });
-    
-    file.on('error', (err) => {
-      fs.unlink(dest, () => {}); // Clean up partial file
-      reject(err);
-    });
-  });
-}
-
-/**
- * Get a random image URL from Unsplash for a theme
- * @param {string} query Search query
- * @returns {Promise<string>}
- */
-async function getUnsplashImageUrl(query) {
-  return new Promise((resolve, reject) => {
-    const encodedQuery = encodeURIComponent(query);
-    const url = `https://api.unsplash.com/photos/random?query=${encodedQuery}&orientation=landscape`;
-    
-    const options = {
-      headers: {
-        'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`
-      }
-    };
-    
-    https.get(url, options, (response) => {
-      let data = '';
-      
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      response.on('end', () => {
-        if (response.statusCode !== 200) {
-          reject(new Error(`Failed to get image URL: ${response.statusCode}`));
-          return;
-        }
-        
-        try {
-          const json = JSON.parse(data);
-          resolve(json.urls.raw + '&w=1920&h=1080&fit=crop');
-        } catch (err) {
-          reject(new Error('Failed to parse Unsplash response'));
-        }
-      });
-    }).on('error', reject);
-  });
-}
-
-/**
- * Generate a fallback gradient image
+ * Generate a gradient image
  * @param {string} dest Destination path
  * @param {string} theme Theme name
  * @param {boolean} isDark Whether this is a dark variant
@@ -239,10 +104,10 @@ async function downloadThemeImages() {
     ensureDirectoryExists(IMAGES_DIR);
     
     let downloaded = 0;
-    const total = Object.keys(THEME_IMAGES).length * 2; // Light and dark variants
+    const total = Object.keys(THEME_COLORS).length * 2; // Light and dark variants
     
     // Generate images for each theme
-    for (const [theme, config] of Object.entries(THEME_IMAGES)) {
+    for (const theme of Object.keys(THEME_COLORS)) {
       // Generate light variant
       const filename = `bg-${theme}.jpg`;
       const destPath = path.join(IMAGES_DIR, filename);
