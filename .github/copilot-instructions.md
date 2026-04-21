@@ -44,7 +44,7 @@ The server (`src/index.js`) operates in two modes:
 ### Frontend
 
 Single-page client in `public/app.js` (no framework):
-- Fetches verses from `/verses.json` (direct JSON fetch, not the `/api/verse` endpoint)
+- Fetches verses from `/verses.json` (direct JSON fetch)
 - Dual-layer background crossfade (two `div.bg-layer` elements swapping)
 - Theme-aware responsive images: `bg-{themeSlug}-{dark|light}-{size}.{webp|jpg}`
 - Dark/light mode via `data-theme` attribute + `localStorage` + `prefers-color-scheme` media query
@@ -52,7 +52,7 @@ Single-page client in `public/app.js` (no framework):
 
 ### Data
 
-`public/verses.json` contains `{ "verses": [...] }` where each verse has `text`, `reference`, and `theme` fields. The server also exposes `/api/verse` (random verse via shuffled queue) and `/api/verse/meta` (count + theme list).
+`public/verses.json` contains `{ "verses": [...] }` where each verse has `text`, `reference`, and `theme` fields.
 
 ## Key Conventions
 

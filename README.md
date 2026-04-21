@@ -9,7 +9,6 @@ A simple, elegant website that displays random Bible verses with themed backgrou
 - Dual-layer background crossfade with responsive WebP/JPG images
 - Mobile-responsive design
 - Keyboard shortcuts: `Space` (new verse), `T` (toggle theme), `S` (share), `H`/`?` (help)
-- Server API endpoints: `/api/verse` (random verse), `/api/verse/meta` (count + themes)
 - Static site generation for deployment
 
 ## Project Structure

@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Environment variables (safety net — dotenv removed but devs may still create .env)
+.env
+
 # Generated data
 public/verses.json
 public/images/*
