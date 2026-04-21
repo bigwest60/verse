@@ -1,99 +1,111 @@
-# Bible Verse Website
+# Verse — Bible Verse Website
 
-A simple, elegant website that displays random Bible verses with themed background images.
+A simple, elegant website that displays random Bible verses with themed background images. Live at [dailyverse.online](https://dailyverse.online).
 
 ## Features
 
-- Random Bible verse display
-- Themed background images
+- Random Bible verse display with theme-based backgrounds
+- Dark/light mode (auto-detects system preference, toggle with keyboard or button)
+- Dual-layer background crossfade with responsive WebP/JPG images
 - Mobile-responsive design
-- Smooth transitions
-- One-click verse refresh
+- Keyboard shortcuts: `Space` (new verse), `T` (toggle theme), `S` (share), `H`/`?` (help)
+- Server API endpoints: `/api/verse` (random verse), `/api/verse/meta` (count + themes)
+- Static site generation for deployment
 
 ## Project Structure
 
 ```text
 verse/
-├── dist/                 # Build output directory
-│   └── images/           # Processed images for production
-├── files/                # Source files for data preparation
-│   └── whole_bible_niv1984.pdf # Source Bible text
-├── public/               # Static assets served directly or processed
-│   ├── index.html        # Main webpage template
-│   ├── app.js            # Frontend logic (processed by esbuild)
-│   ├── styles.css        # Base CSS styles (processed by PostCSS)
-│   └── images/           # Source background images
-├── scripts/              # Build and utility scripts
-├── src/                  # Server source code
-│   ├── index.js          # Express server
-│   └── download-images.js # Image generation script
-├── .env                  # Environment variable configuration
-├── .env.example          # Environment variable template
-├── esbuild-meta.json     # Metadata output from esbuild builds
-├── package.json          # Project dependencies and scripts
-├── postcss.config.js     # Configuration for PostCSS processor
-└── README.md             # This file
+├── dist/                    # Static site output (generated)
+│   └── images/              # Processed responsive images
+├── files/                   # Source data files
+│   └── whole_bible_niv1984.pdf
+├── public/                  # Static assets (served directly or processed)
+│   ├── index.html           # Main page template
+│   ├── help.html            # Keyboard shortcuts help page
+│   ├── app.js               # Frontend logic (bundled by esbuild)
+│   ├── styles.css           # Base CSS (processed by PostCSS)
+│   ├── verses.json          # Verse data (generated)
+│   └── images/              # Source background images
+├── scripts/                 # Build and utility scripts
+│   ├── generate-static.js   # Static site generator
+│   ├── hash-css.js          # CSS content hashing
+│   ├── optimize-images.js   # Responsive image generation (sharp)
+│   └── update-sitemap.cjs   # Sitemap lastmod updater
+├── src/                     # Server source code
+│   ├── index.js             # Express 5 server
+│   └── download-images.js   # Background image downloader
+├── esbuild-meta.json        # esbuild metadata (generated)
+├── package.json
+├── postcss.config.js
+└── README.md
 ```
 
 ## Setup
 
-1. **Environment:** Copy `.env.example` to `.env` (if it exists) or create a `.env` file.
-    Configure necessary variables (see `.env` section or code).
-2. **Install Dependencies:**
+1. **Install dependencies:**
 
     ```bash
     npm install
     ```
 
-3. **Prepare Data:** (If required for initial setup or data changes)
-    - Process `files/whole_bible_niv1984.pdf`, possibly fetch images.
-        Check `package.json` for scripts (e.g., `prepare`, `extract-verses`).
-        Run the appropriate script(s).
-4. **Build Assets:**
+    The `prepare` script runs automatically after install, downloading and optimizing background images.
+
+2. **Build assets:**
 
     ```bash
-    npm run build # Or the relevant build script from package.json
+    npm run build
     ```
 
-5. **Start the Server:**
+3. **Start the server:**
 
     ```bash
     npm start
     ```
 
-6. Visit `http://localhost:3000` (or the configured port) in your browser.
+4. Visit `http://localhost:3000` in your browser.
 
 ## Scripts
 
-- `npm start`: Starts the Express server on port 3000
-- `npm run build`: Builds JS, CSS, optimizes images, and updates sitemap
-- `npm run build:static`: Full build + generates static site in `dist/`
-- `npm run start:prod`: Starts server in production mode (`NODE_ENV=production`)
-- `npm run setup`: Downloads and optimizes background images
-- `npm run clean`: Removes generated `verses.json` and `images/`
+| Script | Description |
+|---|---|
+| `npm start` | Start Express server (port 3000) |
+| `npm run start:prod` | Start server in production mode |
+| `npm run build` | Build JS + CSS + optimize images + update sitemap |
+| `npm run build:js` | Bundle and minify `app.js` with esbuild (content-hashed output) |
+| `npm run build:css` | Process CSS with PostCSS (autoprefixer + cssnano + content hashing) |
+| `npm run optimize:images` | Generate responsive WebP/JPG images at 4 breakpoints |
+| `npm run build:sitemap` | Update `<lastmod>` dates in `sitemap.xml` |
+| `npm run build:static` | Full build + generate static site in `dist/` |
+| `npm run static` | Generate static site from current build |
+| `npm run serve:static` | Serve `dist/` with `serve` |
+| `npm run setup` | Download and optimize background images |
+| `npm run clean` | Remove generated `verses.json` and `images/` |
+| `npm run knip` | Dead code analysis |
 
 ## Technology Stack
 
-- **Backend:** Node.js with Express 5
-- **Frontend:** Vanilla HTML, CSS, JavaScript
-- **Build Tools:** esbuild (JS bundling), PostCSS (CSS processing), sharp (image optimization)
-- **Images:** Local gradient fallbacks, processed to responsive WebP/JPG
+- **Backend:** Node.js ≥18 with Express 5, Helmet
+- **Frontend:** Vanilla HTML, CSS, JavaScript (no framework)
+- **Build:** esbuild (JS bundling + content hashing), PostCSS (autoprefixer + cssnano), sharp (responsive images)
+- **Deployment:** Static site generation to `dist/`
 
-## Environment Variables (`.env`)
+## Environment Variables
 
-See `.env.example` for the full list. Key variables:
-
-- `PORT`: Server port (default: 3000)
-- `NODE_ENV`: `development` or `production`
+| Variable | Description | Default |
+|---|---|---|
+| `PORT` | Server port | `3000` |
+| `NODE_ENV` | `development` or `production` | `development` |
+| `DEBUG` | Enable verbose logging | Auto-enabled in dev |
 
 ## Contributing
 
-1. Fork the repository.
-2. Create your feature branch.
-3. Commit your changes.
-4. Push to the branch.
-5. Create a Pull Request.
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](mdc:LICENSE) file for details.
+[MIT](LICENSE) © Bill
