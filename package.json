@@ -1,8 +1,9 @@
 {
   "name": "verse",
-  "version": "1.0.0",
+  "version": "1.0.1.0",
   "description": "Display a random bible verse upon page refresh.",
   "author": "Bill",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=18"
@@ -24,7 +25,6 @@
     "build:static": "npm run build && npm run static"
   },
   "dependencies": {
-    "dotenv": "^16.3.1",
     "express": "^5.1.0",
     "helmet": "^8.1.0"
   },
