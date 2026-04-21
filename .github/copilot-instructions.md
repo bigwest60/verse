@@ -44,7 +44,7 @@ The server (`src/index.js`) operates in two modes:
 ### Frontend
 
 Single-page client in `public/app.js` (no framework):
-- Fetches verses from `/verses.json` (direct JSON fetch, not the `/api/verse` endpoint)
+- Fetches verses from `/verses.json` (direct JSON fetch)
 - Dual-layer background crossfade (two `div.bg-layer` elements swapping)
 - Theme-aware responsive images: `bg-{themeSlug}-{dark|light}-{size}.{webp|jpg}`
 - Dark/light mode via `data-theme` attribute + `localStorage` + `prefers-color-scheme` media query
@@ -52,7 +52,7 @@ Single-page client in `public/app.js` (no framework):
 
 ### Data
 
-`public/verses.json` contains `{ "verses": [...] }` where each verse has `text`, `reference`, and `theme` fields. The server also exposes `/api/verse` (random verse via shuffled queue) and `/api/verse/meta` (count + theme list).
+`public/verses.json` contains `{ "verses": [...] }` where each verse has `text`, `reference`, and `theme` fields.
 
 ## Key Conventions
 
@@ -62,3 +62,4 @@ Single-page client in `public/app.js` (no framework):
 - **CSS theming:** Uses CSS custom properties on `:root` (light) and `[data-theme="dark"]` (dark). Color scheme is declared via `color-scheme: light dark`.
 - **Dead code analysis:** `npm run knip`
 - **`__dirname` pattern:** Since ESM doesn't provide `__dirname`, files use `fileURLToPath(import.meta.url)` + `path.dirname()` to get it.
+- **License:** MIT. `package.json` declares `"license": "MIT"` and `LICENSE` contains the full MIT text.
