@@ -104,8 +104,8 @@ function getAssetPaths() {
     return assetPaths;
   }
   
-  let jsFilename = '/app.js'; // Default for dev
-  let cssFilename = '/styles.css'; // Default for dev
+  let jsFilename = 'app.js'; // Default for dev
+  let cssFilename = 'styles.css'; // Default for dev
 
   if (IS_PROD) {
     try {
@@ -114,7 +114,7 @@ function getAssetPaths() {
         const meta = JSON.parse(fs.readFileSync(ESBUILD_META_PATH, 'utf8'));
         const outputKey = Object.keys(meta.outputs).find(key => meta.outputs[key].entryPoint === 'public/app.js');
         if (outputKey) {
-          jsFilename = `/${path.basename(outputKey)}`;
+          jsFilename = path.basename(outputKey);
         }
       }
     } catch (e) { console.error('Error reading JS metafile:', e); }
@@ -122,7 +122,7 @@ function getAssetPaths() {
     try {
       // Read CSS filename from manifest
       if (fs.existsSync(CSS_MANIFEST_PATH)) {
-        cssFilename = `/${fs.readFileSync(CSS_MANIFEST_PATH, 'utf8').trim()}`;
+        cssFilename = fs.readFileSync(CSS_MANIFEST_PATH, 'utf8').trim();
       }
     } catch (e) { console.error('Error reading CSS manifest:', e); }
   }

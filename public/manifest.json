@@ -2,19 +2,19 @@
   "name": "Daily Verse",
   "short_name": "Verse",
   "description": "Daily Bible verses with beautiful backgrounds",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4a5568",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -24,7 +24,7 @@
   "categories": ["lifestyle", "books", "education"],
   "screenshots": [
     {
-      "src": "/screenshot-1.png",
+      "src": "screenshot-1.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "platform": "wide",
@@ -34,7 +34,7 @@
   "shortcuts": [
     {
       "name": "New Verse",
-      "url": "/?action=new",
+      "url": "./?action=new",
       "description": "Get a new verse"
     }
   ],
@@ -42,6 +42,6 @@
   "prefer_related_applications": false,
   "dir": "ltr",
   "lang": "en",
-  "scope": "/",
+  "scope": "./",
   "display_override": ["standalone", "minimal-ui"]
 } 

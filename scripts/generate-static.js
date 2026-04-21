@@ -74,8 +74,8 @@ function generateStaticSite() {
   try {
     const indexHtmlTemplate = fs.readFileSync(HTML_TEMPLATE_PATH, 'utf8');
     const injectedIndexHtml = indexHtmlTemplate
-      .replace(/<!-- CSS_FILENAME --><link[^>]+>/, `<link rel="stylesheet" href="/${cssFilename}">`)
-      .replace(/<!-- JS_FILENAME --><script[^>]+><\/script>/, `<script src="/${jsFilename}"><\/script>`);
+      .replace(/<!-- CSS_FILENAME --><link[^>]+>/, `<link rel="stylesheet" href="${cssFilename}">`)
+      .replace(/<!-- JS_FILENAME --><script[^>]+><\/script>/, `<script src="${jsFilename}"><\/script>`);
     fs.writeFileSync(path.join(DIST_DIR, 'index.html'), injectedIndexHtml);
     console.log(`  Generated dist/index.html with injected assets.`);
   } catch (e) {
@@ -89,7 +89,7 @@ function generateStaticSite() {
     const helpHtmlTemplate = fs.readFileSync(HELP_HTML_TEMPLATE_PATH, 'utf8');
     // Replace the specific link tag
     const injectedHelpHtml = helpHtmlTemplate
-      .replace('<link rel="stylesheet" href="styles.css">', `<link rel="stylesheet" href="/${cssFilename}">`);
+      .replace('<link rel="stylesheet" href="styles.css">', `<link rel="stylesheet" href="${cssFilename}">`);
       
     fs.writeFileSync(path.join(DIST_DIR, 'help.html'), injectedHelpHtml);
     console.log(`  Generated dist/help.html with injected CSS asset.`);

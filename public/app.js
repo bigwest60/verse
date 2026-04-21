@@ -117,7 +117,7 @@ async function setThemeText(theme) {
     const optimalSize = getOptimalImageSize();
     const useWebP = await supportsWebP();
     const extension = useWebP ? 'webp' : 'jpg';
-    const imagePath = `/images/bg-${themeSlug}${isDarkMode ? '-dark' : ''}-${optimalSize}.${extension}`;
+    const imagePath = `images/bg-${themeSlug}${isDarkMode ? '-dark' : ''}-${optimalSize}.${extension}`;
 
     // Don't transition to the same image
     if (currentBackgroundImage === imagePath) return;
@@ -229,7 +229,7 @@ async function fetchVerse() {
   try {
     // Fetch verses from JSON file (cached after first load)
     if (!versesCache) {
-      const response = await fetch('/verses.json');
+      const response = await fetch('verses.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -416,7 +416,7 @@ function init() {
       case 'h':
       case 'H':
         event.preventDefault();
-        window.location.href = '/help.html';
+        window.location.href = 'help.html';
         break;
     }
   });
