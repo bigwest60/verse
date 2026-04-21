@@ -1,39 +1,9 @@
 # Dependencies
 node_modules/
 
-# Environment variables
-.env
-
-# Generated files
-# public/verses.json
-# public/images/*
-# !public/images/.gitkeep
-
-# Logs
-*.log
-npm-debug.log*
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE files
-.idea/
-.vscode/
-*.sublime-project
-*.sublime-workspace
-
-# Dependency directories
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-# OS specific
-.gstack/
+# Generated data
+public/verses.json
+public/images/*
 
 # Build artifacts
 dist/
@@ -42,3 +12,25 @@ public/styles-*.min.css
 public/styles.min.css
 esbuild-meta.json
 scripts/.css-manifest.txt
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Other
+.gstack/
